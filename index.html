@@ -231,6 +231,29 @@ footer span{color:var(--red-br)}
   <p class="desc">Use o chat para explorar dúvidas específicas, pedir exemplos do universo bancário ou entender como aplicar cada conceito no seu contexto de produto.</p>
   <div class="chat-box">
     <div class="panel-noise"></div>
+
+    <!-- Key gate -->
+    <div id="key-gate" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;gap:16px;position:relative;z-index:1">
+      <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ff4757,#bf1e2d);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(191,30,45,.4)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:5px">Configure sua API Key</div>
+        <div style="font-size:13px;color:#5c7082;line-height:1.6;max-width:340px">Cole sua Anthropic API Key para ativar o assistente. Ela fica salva apenas na sessão do browser.</div>
+      </div>
+      <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:8px">
+        <input id="key-input" type="password" placeholder="sk-ant-api03-…"
+          onkeydown="if(event.key==='Enter')saveKey()"
+          style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff;outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='#ff4757'" onblur="this.style.borderColor='rgba(255,255,255,.12)'"/>
+        <div id="key-error" style="font-size:12px;color:#ff4757;min-height:16px"></div>
+        <button onclick="saveKey()" style="background:linear-gradient(135deg,#ff4757,#bf1e2d);border:none;border-radius:4px;padding:11px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(191,30,45,.4)">Ativar Assistente</button>
+        <div style="text-align:center;font-size:11px;color:#5c7082">Obtenha sua key em <a href="https://console.anthropic.com" target="_blank" style="color:#5b9dd9">console.anthropic.com</a></div>
+      </div>
+    </div>
+
+    <!-- Chat body -->
+    <div id="chat-body">
     <div class="chat-header">
       <div class="chat-avatar">
         <svg width="18" height="18" viewBox="0 0 24 24" stroke="#fff"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.73V7h3a3 3 0 013 3v10a3 3 0 01-3 3H6a3 3 0 01-3-3V10a3 3 0 013-3h3V5.73A2 2 0 0110 4a2 2 0 012-2zM9 14a1 1 0 100-2 1 1 0 000 2zM15 14a1 1 0 100-2 1 1 0 000 2z"/></svg>
@@ -260,6 +283,7 @@ footer span{color:var(--red-br)}
         <svg width="16" height="16" viewBox="0 0 24 24" stroke="#fff"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
     </div>
+    </div><!-- /chat-body -->
   </div>
 </section>
 
@@ -613,6 +637,30 @@ function togglePanel(topicNum, rowIdx) {
 
 renderTopics();
 
+/* ── API KEY ── */
+window.ANTHROPIC_API_KEY = '';
+
+function setupApiKey() {
+  const stored = sessionStorage.getItem('velo_api_key');
+  if (stored) { window.ANTHROPIC_API_KEY = stored; showChat(); return; }
+  document.getElementById('key-gate').style.display = 'flex';
+  document.getElementById('chat-body').style.display = 'none';
+}
+function saveKey() {
+  const val = document.getElementById('key-input').value.trim();
+  if (!val.startsWith('sk-')) {
+    document.getElementById('key-error').textContent = 'A key deve começar com sk-ant-…';
+    return;
+  }
+  window.ANTHROPIC_API_KEY = val;
+  sessionStorage.setItem('velo_api_key', val);
+  showChat();
+}
+function showChat() {
+  document.getElementById('key-gate').style.display = 'none';
+  document.getElementById('chat-body').style.display = 'block';
+}
+
 /* ── CHAT ── */
 const SYSTEM_PROMPT = `Você é o assistente de APIs do guia "APIs para Product Managers".
 Ajuda Product Managers a entender conceitos de APIs de forma prática e aplicada ao contexto bancário e fintech brasileiro.
@@ -675,10 +723,13 @@ async function sendMessage() {
   const loadingEl = appendMsg('assistant', '', true);
 
   try {
+    const apiKey = window.ANTHROPIC_API_KEY || '';
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
@@ -689,13 +740,18 @@ async function sendMessage() {
       }),
     });
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || `HTTP ${res.status}`);
+    }
     const reply = data.content?.[0]?.text || 'Não consegui processar a resposta.';
     chatHistory.push({ role: 'assistant', content: reply });
-    const bubble = loadingEl.querySelector('#bubble-loading, .bubble');
+    const bubble = loadingEl.querySelector('.bubble');
     if (bubble) bubble.innerHTML = reply;
-  } catch {
-    const bubble = loadingEl.querySelector('#bubble-loading, .bubble');
-    if (bubble) bubble.textContent = 'Erro de conexão. Tente novamente.';
+  } catch (err) {
+    const bubble = loadingEl.querySelector('.bubble');
+    if (bubble) bubble.textContent = err.message?.includes('API key')
+      ? 'API Key inválida ou ausente. Verifique a configuração.'
+      : 'Erro de conexão: ' + (err.message || 'tente novamente.');
   } finally {
     chatLoading = false;
     sendBtn.disabled = !inputEl.value.trim();
