@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Um endpoint ou cinco?</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080B; --s1:#0e0f16; --s2:#131622; --border:#1e2030; --border2:#2a2d40;
+  --red-b:#CC092F; --red:#900F15;
+  --text:#eef2f7; --muted:#6b7690; --dim:#4b556b;
+  --green:#34d399; --amber:#fbbf24; --cyan:#38bdf8;
+  --red-s:rgba(204,9,47,.10);  --red-l:rgba(204,9,47,.32);
+  --green-s:rgba(52,211,153,.09); --green-l:rgba(52,211,153,.28);
+  --amber-s:rgba(251,191,36,.09); --amber-l:rgba(251,191,36,.28);
+  --cyan-s:rgba(56,189,248,.09);  --cyan-l:rgba(56,189,248,.28);
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Syne','DM Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--sans);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 60% 30% at 50% -5%, rgba(204,9,47,.10), transparent 70%);
+  background-repeat:no-repeat;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px 72px}
+h1,h2,h3{font-family:var(--disp);letter-spacing:-.035em;text-wrap:balance}
+code,pre,.mono{font-family:var(--mono)}
+a{color:inherit}
+
+/* ── HEADER ── */
+header{padding:56px 0 40px}
+.tag{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--border);border-radius:100px;padding:6px 14px;background:var(--s1)}
+.tag i{display:block;width:5px;height:5px;border-radius:50%;background:var(--red-b);font-style:normal;
+  box-shadow:0 0 0 3px rgba(204,9,47,.18)}
+h1{font-size:clamp(34px,5.4vw,58px);font-weight:800;line-height:1.02;margin:22px 0 12px;max-width:16ch}
+h1 em{font-style:normal;color:var(--red-b)}
+.sub{font-size:16px;color:var(--muted);max-width:60ch}
+.sub b{color:var(--text);font-weight:500}
+
+/* ── SECTION LABEL ── */
+.lab{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 20px}
+.lab::before,.lab::after{content:'';flex:1;height:1px;background:var(--border)}
+section{margin-top:52px}
+.legend{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.7;margin-top:14px;letter-spacing:.02em}
+
+/* ── NUMBERS BAND ── */
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.num{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:24px 20px;position:relative;overflow:hidden}
+.num::after{content:'';position:absolute;inset:0 auto 0 0;width:2px;background:var(--cyan);opacity:.5}
+.num .v{font-family:var(--disp);font-weight:800;font-size:clamp(30px,4.4vw,44px);line-height:1;
+  letter-spacing:-.05em;color:var(--text);font-variant-numeric:tabular-nums}
+.num .v small{font-size:.44em;font-weight:700;color:var(--muted);margin-left:2px}
+.num .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+.num .d{font-size:12.5px;color:var(--muted);margin-top:9px;line-height:1.5}
+
+/* ── THESIS ── */
+.thesis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tcol{border:1px solid var(--border);border-radius:6px;padding:22px;background:var(--s1)}
+.tcol.no{border-color:rgba(204,9,47,.22)}
+.tcol.yes{border-color:var(--green-l);background:linear-gradient(180deg,var(--green-s),transparent 60%),var(--s1)}
+.tcol h3{font-size:12px;font-family:var(--mono);font-weight:500;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px}
+.tcol.no h3{color:var(--red-b)} .tcol.yes h3{color:var(--green)}
+.tcol ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.tcol li{font-size:13.5px;line-height:1.55;padding-left:20px;position:relative;color:#cdd6e3}
+.tcol li b{color:var(--text);font-weight:700}
+.tcol.no li::before{content:'×';position:absolute;left:2px;top:-1px;color:var(--red-b);font-weight:700}
+.tcol.yes li::before{content:'→';position:absolute;left:0;top:0;color:var(--green);font-family:var(--mono);font-size:12px}
+.punch{margin-top:12px;border:1px solid var(--red-l);background:var(--red-s);border-radius:6px;
+  padding:20px 24px;text-align:center;font-family:var(--disp);font-weight:700;
+  font-size:clamp(16px,2.4vw,21px);letter-spacing:-.03em;line-height:1.35}
+.punch em{font-style:normal;color:var(--red-b)}
+
+/* ── JARGON CARD ── */
+.jar{margin-top:12px;border:1px dashed var(--border2);border-radius:6px;background:var(--s1)}
+.jar summary{list-style:none;cursor:pointer;padding:13px 18px;display:flex;align-items:center;gap:11px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted);transition:color .2s}
+.jar summary::-webkit-details-marker{display:none}
+.jar summary:hover{color:var(--text)}
+.jar summary i{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  border:1px solid var(--border2);font-style:normal;font-size:10px;color:var(--cyan);flex:none}
+.jar[open] summary i{background:var(--cyan-s)}
+.jarbody{padding:2px 18px 20px;display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--border);margin-top:2px;padding-top:16px}
+.jarbody dt{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.05em;margin-bottom:3px}
+.jarbody dd{font-size:13px;color:var(--muted);line-height:1.6}
+.jarbody dd b{color:var(--text);font-weight:500}
+
+/* ── AXIS TABLE ── */
+.axis{border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--s1)}
+.arow{display:grid;grid-template-columns:1.15fr 1.35fr 130px;gap:18px;align-items:center;
+  padding:16px 20px;border-top:1px solid var(--border)}
+.arow:first-child{border-top:none;background:var(--s2)}
+.arow.h{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:11px 20px}
+.arow .n{font-family:var(--disp);font-weight:700;font-size:14.5px;letter-spacing:-.02em}
+.arow .o{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.5}
+.arow .o s{color:var(--dim);text-decoration:none}
+.imp{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.imp .bars{display:flex;gap:2px}
+.imp .bars b{display:block;width:5px;height:14px;border-radius:1px;background:var(--border2)}
+.imp .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.imp.lo .t{color:var(--dim)} .imp.lo .bars b:nth-child(-n+1){background:var(--dim)}
+.imp.md .t{color:var(--amber)} .imp.md .bars b:nth-child(-n+2){background:var(--amber)}
+.imp.hi .t{color:var(--red-b)} .imp.hi .bars b{background:var(--red-b)}
+
+/* ── PANELS ── */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pan{border:1px solid var(--border);border-radius:6px;padding:22px;background:var(--s1);display:flex;flex-direction:column}
+.pan.g{border-color:var(--green-l)} .pan.a{border-color:var(--amber-l)}
+.pan h3{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px}
+.pan.g h3{color:var(--green)} .pan.a h3{color:var(--amber)}
+.pit{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--border)}
+.pit:first-of-type{border-top:none;padding-top:0}
+.pit .m{font-family:var(--mono);font-size:12.5px;font-weight:500;flex:none;width:74px;line-height:1.35;font-variant-numeric:tabular-nums}
+.pan.g .pit .m{color:var(--green)} .pan.a .pit .m{color:var(--amber)}
+.pit .x{font-size:12.5px;color:#c2cbd9;line-height:1.5}
+.pit .x b{color:var(--text);font-weight:700}
+.psum{margin-top:auto;padding-top:16px;font-size:12px;font-style:italic;color:var(--muted);line-height:1.55;border-top:1px dashed var(--border2)}
+
+/* ── ARCHETYPES ── */
+.arch{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ac{border:1px solid var(--border);border-radius:6px;padding:20px;background:var(--s1);position:relative}
+.ac .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.ac h3{font-size:17px;font-weight:700;margin-bottom:9px;letter-spacing:-.02em}
+.ac p{font-size:12.5px;color:var(--muted);line-height:1.55}
+.ac .verdict{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;line-height:1.5}
+.ac.win .verdict{color:var(--green)} .ac.risk .verdict{color:var(--amber)} .ac.mid .verdict{color:var(--cyan)}
+
+/* ── TECH SECTION ── */
+.tech{border:1px solid var(--border2);border-radius:8px;background:linear-gradient(180deg,rgba(56,189,248,.05),transparent 220px),var(--s1);padding:26px}
+.tech > h3{font-size:20px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+.tech > .intro{font-size:13.5px;color:var(--muted);max-width:72ch;margin-bottom:24px}
+.sublab{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);
+  margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+.sublab::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sublab:first-of-type{margin-top:0}
+.svgbox{overflow-x:auto;border:1px solid var(--border);border-radius:6px;background:#0a0b11;padding:18px 16px}
+.svgbox svg{display:block;min-width:900px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:-1px;position:relative;z-index:2}
+.tab{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:9px 15px;cursor:pointer;
+  background:transparent;border:1px solid transparent;border-bottom:none;border-radius:5px 5px 0 0;
+  color:var(--dim);transition:color .18s var(--ease)}
+.tab:hover{color:var(--text)}
+.tab[aria-selected="true"]{color:var(--cyan);background:#0a0b11;border-color:var(--border);border-bottom-color:#0a0b11}
+.tab.bad[aria-selected="true"]{color:var(--red-b)}
+.pane{border:1px solid var(--border);border-radius:0 6px 6px 6px;background:#0a0b11;overflow:hidden}
+.pane[hidden]{display:none}
+.pane .cap{font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:12px 18px;border-bottom:1px solid var(--border);
+  line-height:1.55;background:rgba(255,255,255,.015)}
+.pane .cap b{color:var(--text);font-weight:500}
+pre{overflow-x:auto;padding:18px;font-size:12px;line-height:1.72;tab-size:2}
+pre code{font-family:var(--mono);color:#c8d2e0;background:none;display:block;white-space:pre}
+.hljs-attr,.hljs-attribute{color:var(--cyan)}
+.hljs-string{color:var(--green)}
+.hljs-number{color:var(--amber)}
+.hljs-literal,.hljs-keyword,.hljs-built_in{color:#ff7a8a}
+.hljs-comment{color:#5a6478;font-style:italic}
+.hljs-title,.hljs-title.function_,.hljs-variable,.hljs-params,.hljs-property{color:#c8d2e0}
+.hljs-punctuation,.hljs-bullet{color:var(--muted)}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.rule{border:1px solid var(--border);border-left:2px solid var(--red-b);border-radius:0 5px 5px 0;
+  padding:13px 15px;background:#0a0b11}
+.rule .h{font-family:var(--mono);font-size:11px;color:var(--red-b);margin-bottom:5px;letter-spacing:.02em}
+.rule .b{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── CHECKLIST ── */
+.chk{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ck{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--border);border-radius:5px;
+  padding:12px 14px;background:var(--s1);cursor:pointer;transition:border-color .18s var(--ease),background .18s var(--ease);
+  text-align:left;font:inherit;color:inherit;width:100%}
+.ck:hover{border-color:var(--border2)}
+.ck:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.ck .b{flex:none;width:17px;height:17px;border:1px solid var(--border2);border-radius:3px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:9px;color:transparent;margin-top:1px;transition:all .18s var(--ease)}
+.ck .q{font-size:12.5px;line-height:1.5;color:#c2cbd9}
+.ck[aria-pressed="true"]{border-color:var(--green-l);background:linear-gradient(90deg,var(--green-s),transparent)}
+.ck[aria-pressed="true"] .b{background:var(--green);border-color:var(--green);color:#06120d}
+.ck[aria-pressed="true"] .q{color:var(--muted)}
+.chkbar{display:flex;align-items:center;gap:12px;margin-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.chkbar .track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.chkbar .fill{height:100%;width:0;background:var(--green);transition:width .3s var(--ease)}
+
+/* ── DECISIONS ── */
+.dec{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dc{border:1px solid var(--border);border-radius:6px;padding:22px;background:var(--s1);display:flex;flex-direction:column;gap:11px}
+.dc .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--red-b)}
+.dc h3{font-size:16px;font-weight:700;line-height:1.25;letter-spacing:-.02em}
+.dc p{font-size:12.5px;color:var(--muted);line-height:1.55}
+.chip-p{align-self:flex-start;margin-top:auto;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  background:var(--amber-s);border:1px solid var(--amber-l);color:var(--amber);border-radius:100px;padding:5px 12px}
+
+/* ── TIMELINE ── */
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;margin-bottom:16px}
+.tl::before{content:'';position:absolute;left:6%;right:6%;top:13px;height:1px;background:var(--border2)}
+.ms{background:none;border:none;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:9px;padding:0;position:relative;z-index:1}
+.ms .dot{width:13px;height:13px;border-radius:50%;background:var(--bg);border:1px solid var(--border2);
+  margin-top:7px;transition:all .22s var(--ease)}
+.ms .n{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);transition:color .2s;text-align:center}
+.ms:hover .dot{border-color:var(--muted)}
+.ms:focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:4px}
+.ms[aria-selected="true"] .dot{background:var(--red-b);border-color:var(--red-b);box-shadow:0 0 0 4px var(--red-s)}
+.ms[aria-selected="true"] .n{color:var(--text)}
+.tlp{border:1px solid var(--border);border-radius:6px;background:var(--s1);padding:22px}
+.tlp[hidden]{display:none}
+.tlp h3{font-size:16px;font-weight:700;margin-bottom:8px;letter-spacing:-.02em}
+.tlp p{font-size:13px;color:var(--muted);line-height:1.6;max-width:74ch}
+.kpis{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}
+.kpi{font-family:var(--mono);font-size:10.5px;background:var(--green-s);border:1px solid var(--green-l);
+  color:var(--green);border-radius:100px;padding:5px 12px;letter-spacing:.02em}
+
+/* ── RISKS ── */
+.risks{display:flex;flex-direction:column;gap:7px}
+.rk{display:grid;grid-template-columns:1fr auto 1.15fr;gap:14px;align-items:center;
+  border:1px solid var(--border);border-radius:5px;padding:12px 16px;background:var(--s1);font-size:12.5px}
+.rk .r{color:var(--muted);line-height:1.45}
+.rk .arrow{font-family:var(--mono);color:var(--red-b);font-size:12px}
+.rk .m{color:var(--text);font-weight:700;line-height:1.45}
+
+/* ── CLOSE + FOOTER ── */
+.close{margin-top:52px;border:1px solid var(--red-l);border-radius:8px;padding:34px 30px;text-align:center;
+  background:linear-gradient(180deg,var(--red-s),transparent)}
+.close p{font-family:var(--disp);font-weight:700;font-size:clamp(17px,2.7vw,25px);letter-spacing:-.035em;
+  line-height:1.32;max-width:34ch;margin:0 auto}
+.close p em{font-style:normal;color:var(--red-b)}
+.close .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:18px}
+footer{margin-top:44px;padding-top:24px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.9;letter-spacing:.03em}
+footer b{color:var(--muted);font-weight:400}
+
+@media (max-width:860px){
+  .nums,.arch,.dec,.rules{grid-template-columns:1fr}
+  .thesis,.panels,.chk{grid-template-columns:1fr}
+  .arow{grid-template-columns:1fr;gap:7px}
+  .imp{justify-content:flex-start}
+  .rk{grid-template-columns:1fr;gap:5px}
+  .rk .arrow{display:none}
+  .tl{grid-template-columns:repeat(2,1fr);gap:18px}
+  .tl::before{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto}}
+@media print{
+  body{background:#fff;color:#111;background-image:none}
+  .tech,.pan,.num,.tcol,.ac,.dc,.tlp,.rk,.ck,.axis,.pane,.svgbox,pre{background:#fff!important;border-color:#ccc!important}
+  pre code{color:#111}
+  .tabs,.chkbar{display:none}
+  .pane[hidden]{display:block!important}
+  .tlp[hidden]{display:block!important}
+  h1,.punch p,.close p{color:#111}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="tag"><i></i>DS BaaS · Open Platform · Time de APIs · Capital de Giro · Ago 2026</span>
+  <h1>Um endpoint ou cinco? <em>O eixo está errado.</em></h1>
+  <p class="sub">A pergunta não é quantas URLs. É <b>quem carrega o estado</b> e <b>quanto dele fica visível</b> para o parceiro. Encapsular estado é o objetivo certo — esconder estado é o risco que estamos prestes a comprar.</p>
+</header>
+
+<section>
+  <div class="lab">Por que decidir agora</div>
+  <div class="nums">
+    <div class="num">
+      <div class="k">Embedded finance · BR</div>
+      <div class="v">US$ 18<small>bi</small></div>
+      <div class="d">Tamanho projetado do mercado brasileiro até 2030. Quem define o contrato primeiro define o padrão de integração da praça.</div>
+    </div>
+    <div class="num">
+      <div class="k">Crédito digital PJ</div>
+      <div class="v">R$ 53,8<small>bi</small></div>
+      <div class="d">Volume das fintechs de crédito digital em 2025, contra R$ 35,5 bi em 2024. O concorrente já está integrado no ERP do cliente.</div>
+    </div>
+    <div class="num">
+      <div class="k">Atrito de integração</div>
+      <div class="v">39<small>%</small></div>
+      <div class="d">Dos desenvolvedores apontam contrato e documentação inconsistentes como o maior obstáculo. 44% recorrem a ler código-fonte para entender a API.</div>
+    </div>
+  </div>
+  <p class="legend">Fontes: ResearchAndMarkets — Brazil Embedded Finance Databook 2025–2030 · PwC/ABFintechs — Pesquisa Fintechs de Crédito Digital 2026 · Postman — State of the API 2025.</p>
+</section>
+
+<section>
+  <div class="lab">Tese</div>
+  <div class="thesis">
+    <div class="tcol no">
+      <h3>O que não vamos fazer</h3>
+      <ul>
+        <li><b>Cinco endpoints soltos.</b> Jogar oferta, elegibilidade, simulação, formalização e assinatura no colo do parceiro é obrigá-lo a aprender política de crédito para vender crédito.</li>
+        <li><b>Um endpoint opaco.</b> Um <code>POST</code> único que infere a intenção pelo formato do payload não é simplicidade — é RPC disfarçado de REST, sem estado endereçável e sem retomada.</li>
+        <li><b>Webhook como único caminho.</b> Exigir endpoint público, validação de assinatura, retry e deduplicação elimina a cauda longa de parceiros antes da primeira chamada.</li>
+      </ul>
+    </div>
+    <div class="tcol yes">
+      <h3>O que vamos fazer</h3>
+      <ul>
+        <li><b>Proposta é um recurso.</b> Um ponto de entrada cria o processo; o estado vira objeto com ID, <code>GET</code>, versão e histórico.</li>
+        <li><b>Passos são sub-recursos.</b> Simulação, formalização e assinatura penduradas na proposta — tipadas, imutáveis, auditáveis.</li>
+        <li><b>A resposta ensina o próximo passo.</b> <code>status</code> + <code>proximo_passo</code> + <code>ator</code>. Quem quer simplicidade segue o link; quem quer controle chama o sub-recurso.</li>
+        <li><b>Polling e webhook, nessa ordem.</b> <code>ETag</code> em primeira classe; callback é otimização de quem já sabe operá-lo.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="punch">Encapsular estado é arquitetura. <em>Esconder estado é dívida de suporte.</em></div>
+
+  <details class="jar">
+    <summary><i>?</i>O que estamos chamando de "recurso de processo", "ator" e "contrato de navegação"</summary>
+    <dl class="jarbody">
+      <div><dt>Recurso de processo</dt><dd>Em vez de expor cada etapa como uma operação independente, a <b>jornada inteira vira um objeto</b> com identidade própria — a proposta. Ela nasce, muda de estado e termina. Precedentes diretos: <code>PaymentIntent</code> da Stripe, <code>/payments</code> + <code>action</code> da Adyen, e o recurso de consentimento do Open Finance Brasil.</dd></div>
+      <div><dt>Contrato de navegação</dt><dd>O bloco fixo que toda resposta devolve dizendo <b>onde você está e o que fazer em seguida</b> (<code>status</code>, <code>proximo_passo.href</code>, <code>campos_requeridos</code>). É o que transforma a integração num laço de 18 linhas em vez de uma máquina de estado replicada no parceiro.</dd></div>
+      <div><dt>Ator</dt><dd>Campo que declara <b>de quem é a vez</b>: <code>parceiro</code>, <code>cliente_final</code> ou <code>banco</code>. Quando é <code>banco</code>, o parceiro sabe que deve aguardar e fazer polling — sem isso ele adivinha, e adivinhação vira ticket.</dd></div>
+      <div><dt>Semeadura de estado</dt><dd>Capacidade do sandbox de <b>criar uma proposta já num estado específico</b> ("recusada por elegibilidade", "assinatura expirada"). Sem isso o parceiro só descobre os caminhos infelizes em produção, com cliente na frente.</dd></div>
+    </dl>
+  </details>
+</section>
+
+<section>
+  <div class="lab">O eixo real — quatro decisões que viraram uma bandeira só</div>
+  <div class="axis">
+    <div class="arow h"><div>Decisão de desenho</div><div>Opções em disputa</div><div style="text-align:right">Impacto no parceiro</div></div>
+    <div class="arow">
+      <div class="n">Granularidade de recurso</div>
+      <div class="o">1 URL <s>vs.</s> N URLs</div>
+      <div class="imp lo"><span class="t">Baixo</span><span class="bars"><b></b><b></b><b></b></span></div>
+    </div>
+    <div class="arow">
+      <div class="n">Quem orquestra o estado</div>
+      <div class="o">banco <s>vs.</s> parceiro</div>
+      <div class="imp hi"><span class="t">Altíssimo</span><span class="bars"><b></b><b></b><b></b></span></div>
+    </div>
+    <div class="arow">
+      <div class="n">Sincronismo</div>
+      <div class="o">request/response + polling <s>vs.</s> callback obrigatório</div>
+      <div class="imp hi"><span class="t">Altíssimo</span><span class="bars"><b></b><b></b><b></b></span></div>
+    </div>
+    <div class="arow">
+      <div class="n">Estilo do contrato</div>
+      <div class="o">orientado a tarefa <s>vs.</s> CRUD</div>
+      <div class="imp md"><span class="t">Médio</span><span class="bars"><b></b><b></b><b></b></span></div>
+    </div>
+  </div>
+  <p class="legend">O ganho que o time persegue está inteiro na linha 2 — e ela não exige colapsar as URLs. O custo que a mesa teme vem das linhas 1 e 3. Separar as quatro decisões dissolve 80% do debate.</p>
+</section>
+
+<section>
+  <div class="lab">O que ganhamos · o que isso cobra</div>
+  <div class="panels">
+    <div class="pan g">
+      <h3>Ganho real do ponto de entrada único</h3>
+      <div class="pit"><span class="m">5 → 1</span><span class="x"><b>Integrações para o "hello world".</b> Uma chamada mais um laço. O parceiro não aprende regra de crédito para vender crédito.</span></div>
+      <div class="pit"><span class="m">0</span><span class="x"><b>Quebras ao mudar política.</b> Novo passo antifraude ou nova regra de elegibilidade entra sem tocar em quem já integrou.</span></div>
+      <div class="pit"><span class="m">1</span><span class="x"><b>Fonte da verdade do estado.</b> Fim da divergência entre o que o canal do parceiro acha e o que o core registrou.</span></div>
+      <div class="pit"><span class="m">100%</span><span class="x"><b>Das transições sob nossa política.</b> Ordem, prazo de validade e reentrada deixam de depender da implementação de terceiro.</span></div>
+      <p class="psum">São vantagens estruturais: vêm do modelo, não de esforço de engenharia.</p>
+    </div>
+    <div class="pan a">
+      <h3>O preço — e como se paga</h3>
+      <div class="pit"><span class="m">any → tipado</span><span class="x"><b>Payload polimórfico degrada o SDK.</b> Sem <code>discriminator</code>, o gerador entrega <code>any</code>: zero autocomplete, erro de contrato só em runtime. Paga-se com sub-recursos tipados.</span></div>
+      <div class="pit"><span class="m">cego → rastreável</span><span class="x"><b>"Deu erro" sem saber o passo.</b> Paga-se com <code>X-Correlation-Id</code> propagado e <code>GET /historico</code> aberto ao parceiro.</span></div>
+      <div class="pit"><span class="m">prod → sandbox</span><span class="x"><b>Caminhos infelizes descobertos em produção.</b> Paga-se com semeadura de estado no sandbox, disponível no dia 1 e não no trimestre seguinte.</span></div>
+      <div class="pit"><span class="m">schema → grafo</span><span class="x"><b>O contrato deixa de ser só o JSON.</b> Um estado novo quebra o <code>switch</code> do parceiro sem mudar uma linha de schema. Paga-se versionando o grafo.</span></div>
+      <p class="psum">São gaps de engenharia — todos endereçáveis antes do congelamento do contrato.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="lab">Para quem estamos desenhando</div>
+  <div class="arch">
+    <div class="ac win">
+      <div class="t">Arquétipo 01</div>
+      <h3>Embed</h3>
+      <p>Usa nossa tela ou webview. Quer crédito como funcionalidade, não como produto próprio. Não quer ver simulação, quer ver "aprovado".</p>
+      <div class="verdict">Ponto de entrada único é ideal. Quanto mais encapsulado, melhor.</div>
+    </div>
+    <div class="ac risk">
+      <div class="t">Arquétipo 02</div>
+      <h3>Headless</h3>
+      <p>ERP, marketplace, folha. Tem UI e marca próprias. Precisa renderizar parcela, taxa, CET e o motivo exato da recusa para o cliente dele.</p>
+      <div class="verdict">Reduzimos o fardo de orquestração dele — não o de dados. Opacidade aqui é problema comercial.</div>
+    </div>
+    <div class="ac mid">
+      <div class="t">Arquétipo 03</div>
+      <h3>Agregador</h3>
+      <p>Compara nossa oferta com a de outros bancos. Precisa de simulação isolada, barata e sem efeito colateral no funil.</p>
+      <div class="verdict">Exige simulação como sub-recurso autônomo. Sem isso, saímos da comparação.</div>
+    </div>
+  </div>
+  <p class="legend">O desenho proposto atende os três com o mesmo contrato: o Embed segue <code>proximo_passo</code> e ignora as URLs; o Headless e o Agregador chamam os sub-recursos direto.</p>
+</section>
+
+<section>
+  <div class="lab">Seção técnica</div>
+  <div class="tech">
+    <h3>O contrato, concretamente</h3>
+    <p class="intro">Enquanto a discussão for conceitual, os dois lados têm razão. Abaixo está o desenho proposto em OpenAPI 3.1, a resposta que ele produz, o código que o parceiro escreve — e o contra-exemplo que mostra por que o endpoint opaco custa caro.</p>
+
+    <div class="sublab">A máquina de estado, e de quem é a vez</div>
+    <div class="svgbox">
+      <svg viewBox="0 0 1080 226" role="img" aria-label="Máquina de estado da proposta de capital de giro: criada, em elegibilidade, aguardando simulação, aguardando formalização, aguardando assinatura, desembolsada; com estados terminais recusada e expirada.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="#2a2d40"/>
+          </marker>
+        </defs>
+        <g font-family="'DM Mono',monospace">
+          <!-- linha principal -->
+          <g>
+            <rect x="4"   y="46" width="152" height="50" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+            <text x="80"  y="70" fill="#eef2f7" font-size="11" text-anchor="middle">criada</text>
+            <text x="80"  y="85" fill="#CC092F" font-size="8.5" text-anchor="middle" letter-spacing="1">ATOR · PARCEIRO</text>
+
+            <rect x="184" y="46" width="152" height="50" rx="5" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.30)"/>
+            <text x="260" y="70" fill="#eef2f7" font-size="11" text-anchor="middle">em_elegibilidade</text>
+            <text x="260" y="85" fill="#38bdf8" font-size="8.5" text-anchor="middle" letter-spacing="1">ATOR · BANCO</text>
+
+            <rect x="364" y="46" width="152" height="50" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+            <text x="440" y="70" fill="#eef2f7" font-size="11" text-anchor="middle">aguard_simulacao</text>
+            <text x="440" y="85" fill="#CC092F" font-size="8.5" text-anchor="middle" letter-spacing="1">ATOR · PARCEIRO</text>
+
+            <rect x="544" y="46" width="152" height="50" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+            <text x="620" y="70" fill="#eef2f7" font-size="11" text-anchor="middle">aguard_formaliz</text>
+            <text x="620" y="85" fill="#CC092F" font-size="8.5" text-anchor="middle" letter-spacing="1">ATOR · PARCEIRO</text>
+
+            <rect x="724" y="46" width="152" height="50" rx="5" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.32)"/>
+            <text x="800" y="70" fill="#eef2f7" font-size="11" text-anchor="middle">aguard_assinatura</text>
+            <text x="800" y="85" fill="#fbbf24" font-size="8.5" text-anchor="middle" letter-spacing="1">ATOR · CLIENTE</text>
+
+            <rect x="904" y="46" width="152" height="50" rx="5" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.38)"/>
+            <text x="980" y="70" fill="#eef2f7" font-size="11" text-anchor="middle">desembolsada</text>
+            <text x="980" y="85" fill="#34d399" font-size="8.5" text-anchor="middle" letter-spacing="1">TERMINAL</text>
+          </g>
+          <g stroke="#2a2d40" stroke-width="1.2" marker-end="url(#ar)" fill="none">
+            <path d="M158 71 H180"/><path d="M338 71 H360"/><path d="M518 71 H540"/>
+            <path d="M698 71 H720"/><path d="M878 71 H900"/>
+          </g>
+          <!-- terminais negativos -->
+          <g>
+            <rect x="184" y="160" width="152" height="42" rx="5" fill="rgba(107,118,144,.08)" stroke="#2a2d40"/>
+            <text x="260" y="178" fill="#9aa5b8" font-size="11" text-anchor="middle">recusada</text>
+            <text x="260" y="192" fill="#6b7690" font-size="8.5" text-anchor="middle" letter-spacing="1">TERMINAL · COM MOTIVO</text>
+
+            <rect x="454" y="160" width="152" height="42" rx="5" fill="rgba(107,118,144,.08)" stroke="#2a2d40"/>
+            <text x="530" y="178" fill="#9aa5b8" font-size="11" text-anchor="middle">expirada</text>
+            <text x="530" y="192" fill="#6b7690" font-size="8.5" text-anchor="middle" letter-spacing="1">TERMINAL · TTL DA OFERTA</text>
+          </g>
+          <g stroke="#2a2d40" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ar)" fill="none">
+            <path d="M260 98 V156"/>
+            <path d="M440 98 V130 H526 V156"/>
+            <path d="M800 98 V140 H534 V156"/>
+          </g>
+          <text x="4" y="220" fill="#4b556b" font-size="9.5" letter-spacing="1">ATOR = BANCO → O PARCEIRO AGUARDA E FAZ POLLING · ATOR = PARCEIRO OU CLIENTE → PROXIMO_PASSO.HREF DIZ O QUE CHAMAR</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="sublab">OpenAPI 3.1 — recurso de processo com passos endereçáveis</div>
+    <div class="tabs" role="tablist" aria-label="Exemplos de contrato">
+      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true">openapi.yaml</button>
+      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">schemas.yaml</button>
+      <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false">resposta.json</button>
+      <button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false">integracao.js</button>
+      <button class="tab bad" role="tab" id="t5" aria-controls="p5" aria-selected="false">contra-exemplo</button>
+    </div>
+
+    <div class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+      <div class="cap">Um ponto de entrada cria o processo. Todo o resto pende dele. <b>Location + ETag desde o 201</b> — o parceiro sai da primeira chamada já sabendo endereçar e versionar o que criou.</div>
+<pre><code class="language-yaml">openapi: 3.1.0
+info:
+  title: Capital de Giro — Bradesco as a Service
+  version: "2026-08-31"
+
+paths:
+
+  /capital-de-giro/propostas:
+    post:
+      summary: Cria a proposta e devolve o primeiro passo
+      operationId: criarProposta
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NovaProposta' }
+      responses:
+        "201":
+          description: Proposta criada
+          headers:
+            Location:          { schema: { type: string, format: uri-reference } }
+            ETag:              { schema: { type: string } }
+            X-Correlation-Id:  { schema: { type: string } }   # o mesmo id atravessa os 5 passos internos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposta' }
+
+  /capital-de-giro/propostas/{id}:
+    get:
+      summary: Estado atual — fonte da verdade e caminho de polling
+      operationId: lerProposta
+      parameters:
+        - $ref: '#/components/parameters/PropostaId'
+        - name: If-None-Match
+          in: header
+          schema: { type: string }
+      responses:
+        "200": { $ref: '#/components/responses/PropostaOk' }
+        "304": { description: Sem alteração desde o ETag informado — polling barato }
+
+  /capital-de-giro/propostas/{id}/historico:
+    get:
+      summary: Trilha de transições, com correlation id por passo
+      description: |
+        Exposto ao parceiro de propósito. É o que evita que "deu erro"
+        vire escavação no N2 — ele mesmo vê em qual passo interno parou.
+      responses:
+        "200": { description: Lista de transições }
+
+  /capital-de-giro/propostas/{id}/simulacoes:
+    post:
+      summary: Cria uma simulação — artefato imutável e comparável
+      description: |
+        Sub-recurso autônomo: o agregador simula sem efeito colateral no funil.
+        Cada simulação tem id próprio, CET e prazo de validade.
+      parameters:
+        - $ref: '#/components/parameters/PropostaId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        "201": { $ref: '#/components/responses/PropostaOk' }
+
+  /capital-de-giro/propostas/{id}/formalizacao:
+    post:
+      summary: Registra o aceite das condições
+      description: |
+        Fronteira com efeito jurídico: aqui nasce a evidência datada e imutável
+        de que o cliente viu CET, taxa e prazo. Nunca colapsar em "avançar".
+      parameters:
+        - $ref: '#/components/parameters/PropostaId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: If-Match
+          in: header
+          required: true
+          description: Versão da proposta lida pelo parceiro. Bloqueia avanço sobre estado velho.
+          schema: { type: string }
+      responses:
+        "201": { $ref: '#/components/responses/PropostaOk' }
+        "409": { description: Estado divergente — releia a proposta antes de repetir }
+
+  /capital-de-giro/propostas/{id}/assinatura:
+    post:
+      summary: Abre a assinatura do cliente final e devolve o link/desafio
+      responses:
+        "201": { $ref: '#/components/responses/PropostaOk' }
+</code></pre>
+    </div>
+
+    <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+      <div class="cap">O <b>contrato de navegação</b> vive aqui. <code>proximo_passo</code> é o que torna a integração um laço; <code>enriquecimento</code> é o que permite ao parceiro explicar a oferta ao cliente dele — e o que sustenta a base legal do tratamento.</div>
+<pre><code class="language-yaml">components:
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Chave única por transição. Um retry devolve a MESMA resposta —
+        nunca cria proposta duplicada nem desembolsa duas vezes.
+      schema: { type: string, format: uuid }
+
+  schemas:
+
+    Proposta:
+      type: object
+      required: [id, status, versao, proximo_passo]
+      properties:
+        id:     { type: string, examples: ["prop_01J8ZK3M4QP7"] }
+        versao: { type: integer, description: Vai no If-Match da próxima transição }
+        status:
+          type: string
+          description: O grafo é versionado junto com o schema. Estado novo = mudança de contrato.
+          enum:
+            - criada
+            - em_elegibilidade
+            - aguardando_simulacao
+            - aguardando_formalizacao
+            - aguardando_assinatura
+            - em_desembolso
+            - desembolsada
+            - recusada
+            - expirada
+        proximo_passo:
+          oneOf:
+            - $ref: '#/components/schemas/ProximoPasso'
+            - type: "null"           # null = terminal. Fim do laço, sem adivinhação.
+        enriquecimento:
+          type: array
+          description: |
+            O que o banco preencheu e de onde veio. Sem isto o parceiro não
+            explica a oferta ao cliente final — e não temos rastro de base legal.
+          items:
+            type: object
+            required: [campo, origem, base_legal]
+            properties:
+              campo:      { type: string, examples: ["faturamento_medio_12m"] }
+              origem:     { type: string, enum: [interna, bureau, open_finance] }
+              base_legal: { type: string, examples: ["consentimento:cons_9F2K"] }
+
+    ProximoPasso:
+      type: object
+      description: Contrato de navegação. Estável mesmo quando o grafo cresce.
+      required: [acao, metodo, href, ator]
+      properties:
+        acao:   { type: string, examples: ["formalizar"] }
+        metodo: { type: string, enum: [GET, POST] }
+        href:   { type: string, format: uri-reference }
+        ator:
+          type: string
+          enum: [parceiro, cliente_final, banco]
+          description: banco = aguarde e faça polling. Sem este campo, o parceiro adivinha.
+        campos_requeridos:
+          type: array
+          items: { type: string }
+        expira_em: { type: string, format: date-time }
+</code></pre>
+    </div>
+
+    <div class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+      <div class="cap">A mesma resposta serve os três arquétipos: o <b>Embed</b> lê só <code>proximo_passo</code>; o <b>Headless</b> renderiza <code>simulacao_vigente</code> na marca dele; o <b>Agregador</b> compara <code>cet_aa</code> e ignora o resto.</div>
+<pre><code class="language-json">{
+  "id": "prop_01J8ZK3M4QP7",
+  "versao": 4,
+  "status": "aguardando_formalizacao",
+  "criada_em": "2026-08-31T14:02:11Z",
+
+  "simulacao_vigente": {
+    "id": "sim_7Q2X",
+    "valor": 250000.00,
+    "parcelas": 12,
+    "taxa_am": 1.79,
+    "cet_aa": 26.42,
+    "expira_em": "2026-09-02T14:02:11Z"
+  },
+
+  "enriquecimento": [
+    { "campo": "faturamento_medio_12m", "origem": "interna",      "base_legal": "contrato:cc_4471" },
+    { "campo": "score_credito",         "origem": "bureau",       "base_legal": "consentimento:cons_9F2K" },
+    { "campo": "endividamento_sfn",     "origem": "open_finance", "base_legal": "consentimento:cons_9F2K" }
+  ],
+
+  "proximo_passo": {
+    "acao": "formalizar",
+    "metodo": "POST",
+    "href": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7/formalizacao",
+    "ator": "parceiro",
+    "campos_requeridos": ["representante_legal", "conta_desembolso"],
+    "expira_em": "2026-09-02T14:02:11Z"
+  },
+
+  "_links": {
+    "self": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7",
+    "historico": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7/historico"
+  }
+}
+</code></pre>
+    </div>
+
+    <div class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+      <div class="cap">O "hello world" completo — <b>do CNPJ ao desembolso</b>. Sem webhook, sem endpoint público, sem conhecer política de crédito. Este trecho é o que devemos escrever <b>antes</b> de escrever o backend: se ele não couber numa tela, o contrato está errado.</div>
+<pre><code class="language-javascript">// Integração ponta a ponta. 18 linhas, zero regra de negócio no parceiro.
+
+let p = await api.post('/capital-de-giro/propostas',
+  { cnpj, valor_desejado: 250000 },
+  { 'Idempotency-Key': uuid() });
+
+while (p.proximo_passo) {
+  const { metodo, href, ator, acao, campos_requeridos } = p.proximo_passo;
+
+  if (ator === 'banco') {                      // é a vez do banco: aguarde
+    await sleep(2000);
+    p = await api.get(p._links.self, { 'If-None-Match': p.etag });
+    continue;                                  // 304 = nada mudou, custo ~zero
+  }
+
+  const payload = await minhaUI.coletar(acao, campos_requeridos);
+  p = await api[metodo.toLowerCase()](href, payload, {
+    'Idempotency-Key': uuid(),                 // retry não duplica desembolso
+    'If-Match': p.versao                       // não avança sobre estado velho
+  });
+}
+
+console.log(p.status);   // "desembolsada" | "recusada" | "expirada"
+</code></pre>
+    </div>
+
+    <div class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+      <div class="cap">O mesmo produto no <b>padrão opaco</b>: um endpoint que infere a intenção pelo formato do payload. O contrato até compila — o problema aparece no SDK que o parceiro recebe.</div>
+<pre><code class="language-yaml"># CONTRA-EXEMPLO — não adotar
+/capital-de-giro:
+  post:
+    summary: Faz tudo. O servidor descobre o que você quis dizer.
+    requestBody:
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/PayloadElegibilidade'
+              - $ref: '#/components/schemas/PayloadSimulacao'
+              - $ref: '#/components/schemas/PayloadFormalizacao'
+              - $ref: '#/components/schemas/PayloadAssinatura'
+            # sem discriminator: nem o gerador nem o parceiro sabem qual é qual
+    responses:
+      "200":
+        description: Alguma das nove formas possíveis de resposta
+        content:
+          application/json:
+            schema:
+              oneOf: [ "...", "...", "..." ]
+</code></pre>
+      <div class="cap" style="border-top:1px solid var(--border);border-bottom:none">O que o gerador de SDK entrega ao parceiro a partir do contrato acima:</div>
+<pre><code class="language-typescript">// TypeScript gerado — o custo, concretamente:
+export function postCapitalDeGiro(body: any): Promise&lt;any&gt;;
+
+// autocomplete .................... nenhum
+// erro de contrato ................ só em runtime, com cliente na frente
+// retomada após queda ............. impossível: não há id de processo
+// suporte ......................... "deu erro" sem saber em qual dos 5 passos
+// evidência do aceite do CET ...... dissolvida dentro de um POST genérico
+</code></pre>
+    </div>
+
+    <div class="sublab">Não negociáveis do contrato</div>
+    <div class="rules">
+      <div class="rule"><div class="h">Idempotency-Key</div><div class="b">Obrigatório em toda transição. Retry de rede devolve a mesma resposta — nunca uma segunda proposta nem um segundo desembolso.</div></div>
+      <div class="rule"><div class="h">If-Match / versao</div><div class="b">Concorrência otimista. Duas abas do parceiro não avançam a mesma proposta duas vezes. Divergência devolve 409, não estrago.</div></div>
+      <div class="rule"><div class="h">ETag + polling</div><div class="b">Caminho de primeira classe, documentado com o mesmo cuidado do webhook. Callback é otimização de quem já sabe operá-lo.</div></div>
+      <div class="rule"><div class="h">X-Correlation-Id</div><div class="b">Um id atravessa os cinco passos internos e volta ao parceiro em todas as respostas e no histórico. É o fim da arqueologia no N2.</div></div>
+      <div class="rule"><div class="h">Enriquecimento declarado</div><div class="b">Campo preenchido pelo banco aparece na resposta com origem e base legal encadeada ao consentimento. Atende LGPD e o atendimento do parceiro.</div></div>
+      <div class="rule"><div class="h">Grafo versionado</div><div class="b">O contrato é schema <em>mais</em> máquina de estado. Estado novo é mudança de contrato — mesmo quando o JSON não muda.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="lab">Checklist de prontidão — o contrato só congela com onze "sim"</div>
+  <div class="chk" id="chk">
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Existe o snippet do "hello world", escrito antes do backend, cabendo numa tela?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">O estado é endereçável — dou <code>GET</code> e sei exatamente onde estou?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Se o processo do parceiro cair no meio, ele retoma do ponto exato?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Retry de rede é seguro em todas as transições, inclusive no desembolso?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">É possível integrar sem expor endpoint público na internet?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">O SDK gerado é tipado, ou o parceiro recebe <code>any</code>?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Se a máquina crescer para 20 estados, o parceiro precisa conhecer os 20?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Adicionar um estado quebra quem já integrou? Como versionamos o grafo?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">No sandbox, o parceiro força "recusada" e "assinatura expirada" sozinho?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">Onde fica a evidência datada de que o cliente viu e aceitou o CET?</span></button>
+    <button class="ck" aria-pressed="false"><span class="b">✓</span><span class="q">O que é síncrono, o que não é, e qual o SLA publicado de cada transição?</span></button>
+  </div>
+  <div class="chkbar"><span id="chkc">0 / 11</span><span class="track"><span class="fill" id="chkf"></span></span><span>respondidos</span></div>
+</section>
+
+<section>
+  <div class="lab">Decisões da mesa</div>
+  <div class="dec">
+    <div class="dc">
+      <div class="n">Decisão 1</div>
+      <h3>Adotar "processo como recurso, passos como sub-recursos" como padrão canônico do BaaS</h3>
+      <p>Não só para capital de giro. Todo produto do BaaS com jornada multi-etapa nasce com o mesmo contrato de navegação — <code>status</code>, <code>proximo_passo</code>, <code>ator</code>. Um parceiro aprende uma vez e integra qualquer produto.</p>
+      <span class="chip-p">Antes do congelamento do contrato</span>
+    </div>
+    <div class="dc">
+      <div class="n">Decisão 2</div>
+      <h3>Polling com ETag como caminho de primeira classe, webhook como otimização</h3>
+      <p>Nenhum parceiro deve ser obrigado a expor endpoint público para integrar. A documentação de polling recebe o mesmo investimento da de callback — não uma nota de rodapé.</p>
+      <span class="chip-p">Junto com a v1 da documentação</span>
+    </div>
+    <div class="dc">
+      <div class="n">Decisão 3</div>
+      <h3>Sandbox com semeadura de estado no dia 1, validado com três parceiros reais</h3>
+      <p>Um Embed, um Headless, um Agregador. Só com a documentação, sem engenheiro do banco na sala. Duas semanas de esforço contra dois anos de suporte.</p>
+      <span class="chip-p">Antes do primeiro parceiro em produção</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="lab">Régua de tempo</div>
+  <div class="tl" role="tablist" aria-label="Marcos">
+    <button class="ms" role="tab" id="m0" aria-controls="mp0" aria-selected="true"><span class="dot"></span><span class="n">M0 · SET/26<br>Contrato</span></button>
+    <button class="ms" role="tab" id="m1" aria-controls="mp1" aria-selected="false"><span class="dot"></span><span class="n">M1 · OUT/26<br>Sandbox</span></button>
+    <button class="ms" role="tab" id="m2" aria-controls="mp2" aria-selected="false"><span class="dot"></span><span class="n">M2 · NOV/26<br>Prova com parceiros</span></button>
+    <button class="ms" role="tab" id="m3" aria-controls="mp3" aria-selected="false"><span class="dot"></span><span class="n">M3 · DEZ/26<br>Produção</span></button>
+  </div>
+  <div class="tlp" id="mp0" role="tabpanel" aria-labelledby="m0">
+    <h3>M0 — Congelar o contrato de navegação</h3>
+    <p>OpenAPI 3.1 publicado com o recurso de proposta, os sub-recursos e o bloco <code>proximo_passo</code>. Política de versionamento cobrindo o grafo, não só o schema.</p>
+    <div class="kpis"><span class="kpi">OpenAPI 3.1 publicado e validado</span><span class="kpi">SDK TypeScript gerado sem <code>any</code></span><span class="kpi">Snippet de integração cabe em uma tela</span></div>
+  </div>
+  <div class="tlp" id="mp1" role="tabpanel" aria-labelledby="m1" hidden>
+    <h3>M1 — Sandbox com semeadura de estado</h3>
+    <p>O parceiro cria propostas já posicionadas em qualquer estado do grafo, inclusive terminais negativos, e exercita os caminhos infelizes sem abrir chamado.</p>
+    <div class="kpis"><span class="kpi">9 estados semeáveis via API</span><span class="kpi">"Recusada" e "expirada" testáveis sem suporte</span><span class="kpi">Coleção Postman publicada</span></div>
+  </div>
+  <div class="tlp" id="mp2" role="tabpanel" aria-labelledby="m2" hidden>
+    <h3>M2 — Prova com três parceiros reais</h3>
+    <p>Um Embed, um Headless, um Agregador. Recebem credencial e documentação, nada mais. Cronometramos. Cada pergunta feita ao banco é um defeito de documentação registrado.</p>
+    <div class="kpis"><span class="kpi">Time-to-first-call &lt; 1 dia útil</span><span class="kpi">Zero chamadas de suporte no happy path</span><span class="kpi">Backlog de DX priorizado pelos 3</span></div>
+  </div>
+  <div class="tlp" id="mp3" role="tabpanel" aria-labelledby="m3" hidden>
+    <h3>M3 — Primeiro desembolso em produção via API</h3>
+    <p>Jornada ponta a ponta pelo canal do parceiro, com evidência de aceite do CET arquivada e trilha de correlação completa entre os cinco passos internos.</p>
+    <div class="kpis"><span class="kpi">1º crédito desembolsado via API</span><span class="kpi">&lt; 3 tickets por parceiro em 30 dias</span><span class="kpi">100% das transições com correlation id</span></div>
+  </div>
+  <p class="legend">Prazos ousados de propósito: o custo de mudar o contrato cresce com o número de parceiros integrados. Congelar cedo e bem é mais barato que corrigir depois — a régua é agressiva porque a janela de reversibilidade fecha em M3. Estimativas a validar com a Superintendência de Negócios e Produtos — premissas de planejamento, não compromissos.</p>
+</section>
+
+<section>
+  <div class="lab">Riscos e mitigações</div>
+  <div class="risks">
+    <div class="rk"><span class="r">Webhook obrigatório exclui a cauda longa de parceiros antes da primeira chamada</span><span class="arrow">→</span><span class="m">Polling com ETag como caminho de primeira classe, documentado igual</span></div>
+    <div class="rk"><span class="r">Estado opaco transforma cada incidente em escavação no N2</span><span class="arrow">→</span><span class="m">GET /historico aberto ao parceiro + X-Correlation-Id propagado</span></div>
+    <div class="rk"><span class="r">Retry de rede duplica proposta ou desembolso</span><span class="arrow">→</span><span class="m">Idempotency-Key obrigatório e If-Match por versão em toda transição</span></div>
+    <div class="rk"><span class="r">Colapsar passos dissolve a evidência de aceite do CET</span><span class="arrow">→</span><span class="m">Formalização como artefato imutável, datado e endereçável</span></div>
+    <div class="rk"><span class="r">Enriquecimento sem rastro quebra LGPD e cega o atendimento do parceiro</span><span class="arrow">→</span><span class="m">Bloco enriquecimento na resposta, com origem e base legal encadeada</span></div>
+    <div class="rk"><span class="r">Estado novo quebra o parceiro sem que o schema mude</span><span class="arrow">→</span><span class="m">Grafo versionado; estado desconhecido tratado por ator e href</span></div>
+    <div class="rk"><span class="r">Payload polimórfico degrada o SDK e empurra erro para runtime</span><span class="arrow">→</span><span class="m">Discriminator obrigatório e escrita sempre por sub-recurso tipado</span></div>
+  </div>
+</section>
+
+<div class="close">
+  <p>O concorrente vai vender "uma chamada e pronto". Nós vamos vender uma chamada e pronto — <em>com o estado visível, retomável e auditável.</em></p>
+  <div class="k">A diferença não aparece na demo. Aparece no segundo ano.</div>
+</div>
+
+<footer>
+  <div>
+    <b>Trilha documental</b><br>
+    Companion v1 — OpenAPI completo e máquina de estado formal<br>
+    Companion v2 — Guia de integração por arquétipo (Embed · Headless · Agregador)<br>
+    Companion v3 — Threat model e base legal do enriquecimento
+  </div>
+  <div style="text-align:right">
+    <b>Uso interno · DS BaaS · Open Platform</b><br>
+    Documento de decisão técnica — não circular externamente<br>
+    v1 · 31 de agosto de 2026
+  </div>
+</footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function () {
+  if (window.hljs) { try { hljs.highlightAll(); } catch (e) {} }
+
+  function wireTabs(tabSel, paneAttr) {
+    document.querySelectorAll(tabSel).forEach(function (tab, _, all) {
+      tab.addEventListener('click', function () {
+        all.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute('aria-selected', String(on));
+          var pane = document.getElementById(t.getAttribute(paneAttr));
+          if (pane) pane.hidden = !on;
+        });
+      });
+    });
+  }
+  wireTabs('.tab', 'aria-controls');
+  wireTabs('.ms', 'aria-controls');
+
+  var boxes = document.querySelectorAll('#chk .ck');
+  var count = document.getElementById('chkc');
+  var fill  = document.getElementById('chkf');
+  function sync() {
+    var n = document.querySelectorAll('#chk .ck[aria-pressed="true"]').length;
+    count.textContent = n + ' / ' + boxes.length;
+    fill.style.width = (n / boxes.length * 100) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      sync();
+    });
+  });
+  sync();
+})();
+</script>
+</body>
+</html>

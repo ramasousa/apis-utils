@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADR-001 Capital de Giro</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080B; --s1:#0e0f16; --s2:#131622; --border:#1e2030; --border2:#2a2d40;
+  --red-b:#CC092F; --text:#eef2f7; --muted:#6b7690; --dim:#4b556b;
+  --green:#34d399; --amber:#fbbf24; --cyan:#38bdf8;
+  --red-s:rgba(204,9,47,.10); --red-l:rgba(204,9,47,.32);
+  --green-s:rgba(52,211,153,.09); --green-l:rgba(52,211,153,.30);
+  --amber-s:rgba(251,191,36,.09); --amber-l:rgba(251,191,36,.30);
+  --cyan-s:rgba(56,189,248,.09); --cyan-l:rgba(56,189,248,.30);
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Syne','DM Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:0 22px 80px}
+code{font-family:var(--mono);font-size:.9em;color:var(--cyan);background:rgba(56,189,248,.07);
+  border:1px solid rgba(56,189,248,.14);border-radius:3px;padding:1px 5px}
+h1,h2,h3{font-family:var(--disp);letter-spacing:-.035em;text-wrap:balance}
+
+/* header */
+header{padding:52px 0 30px;border-bottom:1px solid var(--border)}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--red-b)}
+h1{font-size:clamp(28px,4.6vw,44px);font-weight:800;line-height:1.05;margin:14px 0 0;max-width:20ch}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:28px}
+.meta div{background:var(--s1);padding:13px 16px}
+.meta dt{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.meta dd{font-family:var(--mono);font-size:12px;color:var(--text)}
+.meta dd.prop{color:var(--amber)}
+
+/* sections */
+section{margin-top:46px}
+.snum{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+h2{font-size:21px;font-weight:800;margin:6px 0 16px}
+p{max-width:70ch;color:#c2cbd9}
+p + p{margin-top:12px}
+p b,li b{color:var(--text);font-weight:700}
+.note{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.7;margin-top:12px}
+
+/* alternatives */
+.alts{display:flex;flex-direction:column;gap:10px}
+.alt{border:1px solid var(--border);border-radius:6px;background:var(--s1);padding:18px 20px;
+  border-left:2px solid var(--border2)}
+.alt.rej{border-left-color:var(--red-b)}
+.alt.acc{border-left-color:var(--green);background:linear-gradient(90deg,var(--green-s),transparent 55%),var(--s1)}
+.alt .top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+.alt .id{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim)}
+.alt h3{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.alt .st{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  border-radius:100px;padding:3px 11px}
+.alt.rej .st{color:var(--red-b);background:var(--red-s);border:1px solid var(--red-l)}
+.alt.acc .st{color:var(--green);background:var(--green-s);border:1px solid var(--green-l)}
+.alt p{font-size:13.5px;max-width:none}
+.why{margin-top:11px;padding-top:11px;border-top:1px dashed var(--border2);font-size:13px;color:var(--muted)}
+.why b{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);display:block;margin-bottom:5px;font-weight:400}
+.why ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.why li{padding-left:16px;position:relative;line-height:1.5}
+.why li::before{content:'—';position:absolute;left:0;color:var(--dim);font-family:var(--mono);font-size:11px}
+
+/* consequences */
+.cons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cbox{border:1px solid var(--border);border-radius:6px;background:var(--s1);padding:18px 20px}
+.cbox.g{border-color:var(--green-l)} .cbox.a{border-color:var(--amber-l)}
+.cbox h3{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:400;margin-bottom:14px}
+.cbox.g h3{color:var(--green)} .cbox.a h3{color:var(--amber)}
+.cbox ul{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:13px;color:#c2cbd9}
+.cbox li{padding-left:17px;position:relative;line-height:1.5}
+.cbox.g li::before{content:'+';position:absolute;left:0;color:var(--green);font-family:var(--mono)}
+.cbox.a li::before{content:'−';position:absolute;left:0;color:var(--amber);font-family:var(--mono)}
+
+/* diagram */
+.svgbox{overflow-x:auto;border:1px solid var(--border);border-radius:6px;background:#0a0b11;padding:16px}
+.svgbox svg{display:block;min-width:840px}
+
+/* code */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:-1px;position:relative;z-index:2}
+.tab{font-family:var(--mono);font-size:10.5px;padding:9px 15px;cursor:pointer;background:transparent;
+  border:1px solid transparent;border-bottom:none;border-radius:5px 5px 0 0;color:var(--dim);transition:color .18s}
+.tab:hover{color:var(--text)}
+.tab[aria-selected="true"]{color:var(--cyan);background:#0a0b11;border-color:var(--border);border-bottom-color:#0a0b11}
+.tab.bad[aria-selected="true"]{color:var(--red-b)}
+.pane{border:1px solid var(--border);border-radius:0 6px 6px 6px;background:#0a0b11;overflow:hidden}
+.pane[hidden]{display:none}
+.cap{font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:12px 18px;
+  border-bottom:1px solid var(--border);line-height:1.6;background:rgba(255,255,255,.015)}
+.cap b{color:var(--text);font-weight:500}
+pre{overflow-x:auto;padding:18px;font-size:12px;line-height:1.72}
+pre code{font-family:var(--mono);color:#c8d2e0;background:none;border:none;padding:0;display:block;white-space:pre;font-size:12px}
+.hljs-attr,.hljs-attribute{color:var(--cyan)}
+.hljs-string{color:var(--green)}
+.hljs-number{color:var(--amber)}
+.hljs-literal,.hljs-keyword,.hljs-built_in{color:#ff7a8a}
+.hljs-comment{color:#5a6478;font-style:italic}
+.hljs-title,.hljs-title.function_,.hljs-variable,.hljs-params,.hljs-property{color:#c8d2e0}
+.hljs-punctuation{color:var(--muted)}
+
+/* invariants */
+.inv{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.iv{border:1px solid var(--border);border-left:2px solid var(--red-b);border-radius:0 5px 5px 0;
+  padding:14px 16px;background:var(--s1)}
+.iv .h{font-family:var(--mono);font-size:11px;color:var(--red-b);margin-bottom:5px}
+.iv .b{font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* outcomes */
+.out{display:flex;flex-direction:column;gap:8px}
+.oi{display:grid;grid-template-columns:26px 1fr 190px;gap:16px;align-items:center;
+  border:1px solid var(--border);border-radius:6px;background:var(--s1);padding:14px 18px}
+.oi .n{font-family:var(--mono);font-size:11px;color:var(--red-b)}
+.oi .t{font-size:13.5px;line-height:1.45}
+.oi .w{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-align:right;color:var(--amber);
+  background:var(--amber-s);border:1px solid var(--amber-l);border-radius:100px;padding:5px 11px}
+.oi .w.now{color:var(--green);background:var(--green-s);border-color:var(--green-l)}
+
+/* open questions */
+.oq{display:flex;flex-direction:column;gap:8px;counter-reset:q}
+.q{border:1px solid var(--border);border-radius:6px;background:var(--s1)}
+.q summary{list-style:none;cursor:pointer;padding:15px 18px;display:flex;gap:14px;align-items:flex-start;
+  font-size:14px;line-height:1.45;transition:background .18s}
+.q summary::-webkit-details-marker{display:none}
+.q summary:hover{background:var(--s2)}
+.q summary::before{counter-increment:q;content:'Q' counter(q);font-family:var(--mono);font-size:10.5px;
+  color:var(--cyan);flex:none;padding-top:2px;letter-spacing:.06em}
+.q summary::after{content:'+';margin-left:auto;font-family:var(--mono);color:var(--dim);flex:none}
+.q[open] summary::after{content:'−'}
+.q .body{padding:0 18px 18px 50px;font-size:13px;color:var(--muted);line-height:1.65;border-top:1px solid var(--border);
+  margin-top:0;padding-top:14px}
+.q .body b{color:var(--text)}
+.q .body .rec{margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--green);line-height:1.6}
+
+/* close */
+.close{margin-top:52px;border:1px solid var(--red-l);border-radius:8px;padding:32px 28px;text-align:center;
+  background:linear-gradient(180deg,var(--red-s),transparent)}
+.close p{font-family:var(--disp);font-weight:700;font-size:clamp(16px,2.6vw,23px);letter-spacing:-.035em;
+  line-height:1.35;max-width:38ch;margin:0 auto;color:var(--text)}
+.close p em{font-style:normal;color:var(--red-b)}
+.close .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:16px}
+footer{margin-top:40px;padding-top:22px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.9;display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer b{color:var(--muted);font-weight:400}
+footer a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(56,189,248,.3)}
+@media (max-width:760px){
+  .meta{grid-template-columns:1fr 1fr}
+  .cons,.inv{grid-template-columns:1fr}
+  .oi{grid-template-columns:26px 1fr;gap:8px}
+  .oi .w{text-align:left;justify-self:start;grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+@media print{
+  body{background:#fff;color:#111}
+  .alt,.cbox,.iv,.oi,.q,.meta div,.pane,.svgbox,pre{background:#fff!important;border-color:#ccc!important}
+  pre code,p,.close p{color:#111}
+  .tabs{display:none} .pane[hidden]{display:block!important}
+  .q .body{display:block!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">DS BaaS · Open Platform · Architecture Decision Record</div>
+  <h1>ADR-001 — Exposição da API de Capital de Giro</h1>
+  <dl class="meta">
+    <div><dt>Status</dt><dd class="prop">Proposta · a ratificar</dd></div>
+    <div><dt>Data</dt><dd>2026-08-31</dd></div>
+    <div><dt>Decisores</dt><dd>DS BaaS · Arquitetura</dd></div>
+    <div><dt>Escopo</dt><dd>Capital de giro · v1</dd></div>
+  </dl>
+</header>
+
+<section>
+  <div class="snum">01</div>
+  <h2>Contexto</h2>
+  <p>Capital de giro é composto por cinco etapas com dependência estrita: <b>oferta, elegibilidade, simulação, formalização e assinatura com desembolso</b>. Cada etapa tem prazo de validade próprio, guarda de negócio própria e — em formalização e assinatura — efeito jurídico.</p>
+  <p>Duas propostas de exposição estão na mesa. A primeira replica a decomposição interna em cinco operações independentes. A segunda concentra tudo num ponto de entrada que encapsula a máquina de estado, com enriquecimento server-side e callbacks.</p>
+  <p>O debate vem sendo conduzido como "um endpoint ou cinco". <b>Não é esse o eixo.</b> Quatro decisões independentes foram empacotadas numa bandeira só: granularidade de recurso, quem orquestra o estado, sincronismo e estilo de contrato. O ganho perseguido está inteiro na segunda — e ela não exige colapsar as URLs.</p>
+  <p class="note">A janela de reversibilidade fecha no primeiro parceiro em produção. Depois disso, mudar o contrato custa o parque integrado inteiro.</p>
+</section>
+
+<section>
+  <div class="snum">02</div>
+  <h2>Alternativas consideradas</h2>
+  <div class="alts">
+
+    <div class="alt rej">
+      <div class="top"><span class="id">OPÇÃO A</span><h3>Cinco endpoints independentes</h3><span class="st">Rejeitada</span></div>
+      <p>Cada etapa vira uma operação de primeira classe, sem recurso que as una. O parceiro chama na ordem, guarda os identificadores e implementa a máquina de estado do lado dele.</p>
+      <div class="why"><b>Por que não</b><ul>
+        <li>Transfere política de crédito ao parceiro: ordem, guardas e prazos de validade viram implementação de terceiro, fora do nosso controle e da nossa auditoria.</li>
+        <li>Estado duplicado em N parceiros diverge do core. Toda divergência vira incidente com cliente na frente.</li>
+        <li>Mudança de política — novo passo antifraude, nova regra de elegibilidade — é breaking change para todo o parque integrado.</li>
+      </ul></div>
+    </div>
+
+    <div class="alt rej">
+      <div class="top"><span class="id">OPÇÃO B</span><h3>Ponto de entrada único opaco</h3><span class="st">Rejeitada</span></div>
+      <p>Um <code>POST /capital-de-giro</code> recebe payloads de formatos diferentes e o servidor infere a intenção pelo conteúdo. O estado existe, mas vive apenas no backend.</p>
+      <div class="why"><b>Por que não</b><ul>
+        <li>Sem estado endereçável não há retomada. Processo do parceiro que cai no meio recomeça — ou duplica.</li>
+        <li>Payload polimórfico sem discriminador degrada o SDK gerado para <code>any</code>: erro de contrato migra de compilação para runtime.</li>
+        <li>Suporte cego. "Deu erro" sem saber em qual dos cinco passos internos parou.</li>
+        <li>A evidência de aceite do CET se dissolve dentro de um POST genérico — problema de conformidade, não de arquitetura.</li>
+      </ul></div>
+    </div>
+
+    <div class="alt acc">
+      <div class="top"><span class="id">OPÇÃO C</span><h3>Recurso de processo com passos endereçáveis</h3><span class="st">Adotada</span></div>
+      <p>Um ponto de entrada cria a <b>proposta</b>, que é um recurso com identidade, versão, histórico e estado consultável. As cinco etapas existem como sub-recursos pendurados nela. Toda resposta carrega o contrato de navegação: <code>status</code>, <code>proximo_passo</code> e <code>ator</code>.</p>
+      <div class="why"><b>Por que sim</b><ul>
+        <li>Preserva o ganho da Opção B — o parceiro segue <code>proximo_passo</code> num laço e não precisa conhecer política de crédito.</li>
+        <li>Recupera o que a Opção B perde — estado endereçável, retomada, tipagem, auditoria e rastreabilidade de suporte.</li>
+        <li>Atende os três arquétipos com um contrato só: quem quer simplicidade segue o link, quem quer controle chama o sub-recurso tipado.</li>
+        <li>Precedentes diretos: <code>PaymentIntent</code> (Stripe), <code>/payments</code> + <code>action</code> (Adyen), recurso de consentimento do Open Finance Brasil.</li>
+      </ul></div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="snum">03</div>
+  <h2>Decisão</h2>
+  <p>Adotamos a <b>Opção C</b> como padrão canônico de exposição para capital de giro e, por extensão, para todo produto do BaaS com jornada multi-etapa. O estado é do banco; a visibilidade é do parceiro.</p>
+  <div class="svgbox" style="margin-top:20px">
+    <svg viewBox="0 0 1010 216" role="img" aria-label="Máquina de estado da proposta: criada, em elegibilidade, aguardando simulação, aguardando formalização, aguardando assinatura, desembolsada, com terminais recusada e expirada.">
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2a2d40"/></marker></defs>
+      <g font-family="'DM Mono',monospace">
+        <rect x="2"   y="42" width="142" height="48" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+        <text x="73"  y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">criada</text>
+        <text x="73"  y="79" fill="#CC092F" font-size="8" text-anchor="middle" letter-spacing="1">PARCEIRO</text>
+
+        <rect x="174" y="42" width="142" height="48" rx="5" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.30)"/>
+        <text x="245" y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">em_elegibilidade</text>
+        <text x="245" y="79" fill="#38bdf8" font-size="8" text-anchor="middle" letter-spacing="1">BANCO</text>
+
+        <rect x="346" y="42" width="142" height="48" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+        <text x="417" y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">aguard_simulacao</text>
+        <text x="417" y="79" fill="#CC092F" font-size="8" text-anchor="middle" letter-spacing="1">PARCEIRO</text>
+
+        <rect x="518" y="42" width="142" height="48" rx="5" fill="rgba(204,9,47,.09)"  stroke="rgba(204,9,47,.34)"/>
+        <text x="589" y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">aguard_formaliz</text>
+        <text x="589" y="79" fill="#CC092F" font-size="8" text-anchor="middle" letter-spacing="1">PARCEIRO</text>
+
+        <rect x="690" y="42" width="142" height="48" rx="5" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.32)"/>
+        <text x="761" y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">aguard_assinatura</text>
+        <text x="761" y="79" fill="#fbbf24" font-size="8" text-anchor="middle" letter-spacing="1">CLIENTE FINAL</text>
+
+        <rect x="862" y="42" width="146" height="48" rx="5" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.38)"/>
+        <text x="935" y="65" fill="#eef2f7" font-size="10.5" text-anchor="middle">desembolsada</text>
+        <text x="935" y="79" fill="#34d399" font-size="8" text-anchor="middle" letter-spacing="1">TERMINAL</text>
+
+        <g stroke="#2a2d40" stroke-width="1.2" marker-end="url(#a1)" fill="none">
+          <path d="M146 66 H170"/><path d="M318 66 H342"/><path d="M490 66 H514"/><path d="M662 66 H686"/><path d="M834 66 H858"/>
+        </g>
+        <path d="M560 38 C560 12, 446 12, 446 38" stroke="#2a2d40" stroke-width="1.1" fill="none" marker-end="url(#a1)"/>
+        <text x="503" y="12" fill="#4b556b" font-size="8.5" text-anchor="middle" letter-spacing=".5">RE-SIMULAR</text>
+
+        <rect x="174" y="152" width="142" height="40" rx="5" fill="rgba(107,118,144,.08)" stroke="#2a2d40"/>
+        <text x="245" y="169" fill="#9aa5b8" font-size="10.5" text-anchor="middle">recusada</text>
+        <text x="245" y="183" fill="#6b7690" font-size="8" text-anchor="middle" letter-spacing="1">TERMINAL · MOTIVO CATALOGADO</text>
+
+        <rect x="518" y="152" width="142" height="40" rx="5" fill="rgba(107,118,144,.08)" stroke="#2a2d40"/>
+        <text x="589" y="169" fill="#9aa5b8" font-size="10.5" text-anchor="middle">expirada</text>
+        <text x="589" y="183" fill="#6b7690" font-size="8" text-anchor="middle" letter-spacing="1">TERMINAL · TTL VENCIDO</text>
+
+        <g stroke="#2a2d40" stroke-width="1.1" stroke-dasharray="3 3" marker-end="url(#a1)" fill="none">
+          <path d="M245 92 V148"/><path d="M417 92 V122 H585 V148"/><path d="M761 92 V132 H593 V148"/>
+        </g>
+        <text x="2" y="210" fill="#4b556b" font-size="9" letter-spacing=".9">ATOR = BANCO → PARCEIRO AGUARDA E FAZ POLLING · DEMAIS → PROXIMO_PASSO.HREF DIZ O QUE CHAMAR</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="snum">04</div>
+  <h2>O contrato, em código</h2>
+  <div class="tabs" role="tablist" aria-label="Exemplos">
+    <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true">contrato de navegação</button>
+    <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false">a integração completa</button>
+    <button class="tab bad" role="tab" id="t3" aria-controls="p3" aria-selected="false">o custo da opção B</button>
+  </div>
+
+  <div class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="cap">O bloco que toda resposta carrega. <b>É isto que torna a integração um laço</b> em vez de uma máquina de estado replicada no parceiro. <code>ator</code> resolve a pergunta que mais gera ticket: "é minha vez ou eu espero?"</div>
+<pre><code class="language-json">{
+  "id": "prop_01J8ZK3M4QP7",
+  "versao": 4,
+  "status": "aguardando_formalizacao",
+
+  "simulacao_vigente": {
+    "id": "sim_7Q2X", "valor": 250000.00, "parcelas": 12,
+    "taxa_am": 1.79, "cet_aa": 26.42, "expira_em": "2026-09-02T14:02:11Z"
+  },
+
+  "enriquecimento": [
+    { "campo": "faturamento_medio_12m", "origem": "interna",      "base_legal": "contrato:cc_4471"      },
+    { "campo": "endividamento_sfn",     "origem": "open_finance", "base_legal": "consentimento:cons_9F2K" }
+  ],
+
+  "proximo_passo": {
+    "acao": "formalizar",
+    "metodo": "POST",
+    "href": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7/formalizacao",
+    "ator": "parceiro",
+    "campos_requeridos": ["representante_legal", "conta_desembolso"],
+    "expira_em": "2026-09-02T14:02:11Z"
+  },
+
+  "_links": { "self": "...", "historico": "..." }
+}
+</code></pre>
+  </div>
+
+  <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <div class="cap">Do CNPJ ao desembolso. Sem webhook, sem endpoint público, sem conhecer política de crédito. <b>Este trecho é o critério de aceite do contrato</b> — se ele não couber numa tela, o desenho está errado.</div>
+<pre><code class="language-javascript">let p = await api.post('/capital-de-giro/propostas',
+  { cnpj, valor_desejado: 250000 },
+  { 'Idempotency-Key': uuid() });
+
+while (p.proximo_passo) {
+  const { metodo, href, ator, acao, campos_requeridos } = p.proximo_passo;
+
+  if (ator === 'banco') {                      // é a vez do banco: aguarde
+    await sleep(2000);
+    p = await api.get(p._links.self, { 'If-None-Match': p.etag });
+    continue;                                  // 304 = nada mudou, custo ~zero
+  }
+
+  const payload = await minhaUI.coletar(acao, campos_requeridos);
+  p = await api[metodo.toLowerCase()](href, payload, {
+    'Idempotency-Key': uuid(),                 // retry não duplica desembolso
+    'If-Match': p.versao                       // não avança sobre estado velho
+  });
+}
+
+console.log(p.status);   // "desembolsada" | "recusada" | "expirada"
+</code></pre>
+  </div>
+
+  <div class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <div class="cap">O mesmo produto no padrão opaco. O contrato compila — <b>o problema aparece no SDK que entregamos ao parceiro.</b></div>
+<pre><code class="language-yaml"># CONTRA-EXEMPLO — não adotar
+/capital-de-giro:
+  post:
+    requestBody:
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/PayloadElegibilidade'
+              - $ref: '#/components/schemas/PayloadSimulacao'
+              - $ref: '#/components/schemas/PayloadFormalizacao'
+              - $ref: '#/components/schemas/PayloadAssinatura'
+            # sem discriminator: nem o gerador nem o parceiro sabem qual é qual
+</code></pre>
+    <div class="cap" style="border-top:1px solid var(--border);border-bottom:none">O TypeScript que o gerador produz a partir do contrato acima:</div>
+<pre><code class="language-typescript">export function postCapitalDeGiro(body: any): Promise&lt;any&gt;;
+
+// autocomplete ................ nenhum
+// erro de contrato ............ só em runtime, com cliente na frente
+// retomada após queda ......... impossível: não há id de processo
+// suporte ..................... "deu erro" sem saber o passo
+// evidência do aceite do CET .. dissolvida num POST genérico
+</code></pre>
+  </div>
+</section>
+
+<section>
+  <div class="snum">05</div>
+  <h2>Consequências</h2>
+  <div class="cons">
+    <div class="cbox g">
+      <h3>O que ganhamos</h3>
+      <ul>
+        <li>Uma chamada mais um laço para integrar. O parceiro não aprende política de crédito para vender crédito.</li>
+        <li>Mudança de política entra sem quebrar o parque integrado, desde que o contrato de navegação permaneça estável.</li>
+        <li>Fonte da verdade única do estado — fim da divergência entre canal do parceiro e core.</li>
+        <li>Formalização e assinatura permanecem artefatos imutáveis e datados: a evidência de conformidade sobrevive ao desenho.</li>
+        <li>Um contrato serve Embed, Headless e Agregador sem bifurcar a API.</li>
+      </ul>
+    </div>
+    <div class="cbox a">
+      <h3>O que assumimos como custo</h3>
+      <ul>
+        <li>Mais superfície para especificar e documentar do que um endpoint só — sub-recursos, histórico, catálogo de erros.</li>
+        <li>O contrato passa a ser schema <b>mais</b> grafo de estados. Estado novo é mudança de contrato mesmo sem mudar o JSON.</li>
+        <li>Semeadura de estado no sandbox vira requisito de MVP, não backlog — sem ela o parceiro descobre caminho infeliz em produção.</li>
+        <li>Paridade polling/webhook dobra o esforço de documentação de assincronia. É deliberado: webhook obrigatório excluiria a cauda longa.</li>
+        <li>Rastreabilidade exposta ao parceiro (<code>historico</code>, <code>X-Correlation-Id</code>) tem custo de armazenamento e de decisão sobre o que não expor.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="snum">06</div>
+  <h2>Invariantes — não negociáveis da v1</h2>
+  <div class="inv">
+    <div class="iv"><div class="h">Idempotency-Key</div><div class="b">Obrigatório em toda transição. Retry devolve a mesma resposta, sem novo efeito. Nunca uma segunda proposta, nunca um segundo desembolso.</div></div>
+    <div class="iv"><div class="h">If-Match por versão</div><div class="b">Concorrência otimista em toda escrita. Duas abas não avançam a mesma proposta. Divergência devolve 409, não estrago.</div></div>
+    <div class="iv"><div class="h">Paridade polling / webhook</div><div class="b">Todo evento tem correspondente observável por <code>GET</code>. Webhook nunca carrega informação que o polling não devolva. Integrar sem endpoint público é sempre possível.</div></div>
+    <div class="iv"><div class="h">Recusa é estado, não erro</div><div class="b">Negativa de crédito devolve <code>200</code> com <code>status: recusada</code> e motivo de catálogo fechado. Nunca <code>4xx</code> — reprovar é resultado de negócio, não falha de chamada.</div></div>
+    <div class="iv"><div class="h">Enriquecimento declarado</div><div class="b">Campo preenchido pelo banco aparece na resposta com origem e base legal encadeada ao consentimento. Sustenta LGPD e o atendimento do parceiro.</div></div>
+    <div class="iv"><div class="h">Estado desconhecido é tolerado</div><div class="b">Cliente conforme trata estado não previsto genericamente via <code>ator</code> e <code>href</code>. É requisito de conformidade, não recomendação.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="snum">07</div>
+  <h2>O que sai desta reunião</h2>
+  <div class="out">
+    <div class="oi"><span class="n">01</span><span class="t">Ratificar a Opção C como padrão canônico do BaaS para jornadas multi-etapa — não só capital de giro.</span><span class="w now">Na reunião</span></div>
+    <div class="oi"><span class="n">02</span><span class="t">Ratificar os seis invariantes como critério de aceite do contrato v1.</span><span class="w now">Na reunião</span></div>
+    <div class="oi"><span class="n">03</span><span class="t">Fechar as seis questões abertas abaixo e congelar o <code>enum</code> de estados da v1.</span><span class="w">+1 semana</span></div>
+    <div class="oi"><span class="n">04</span><span class="t">Incluir semeadura de estado no sandbox no escopo do MVP, com os caminhos infelizes cobertos.</span><span class="w">+2 semanas</span></div>
+  </div>
+  <p class="note">Nenhum item pede recurso adicional. Todos são decisões de desenho que ficam mais caras depois do primeiro parceiro integrado.</p>
+</section>
+
+<section>
+  <div class="snum">08</div>
+  <h2>Questões abertas — a pauta</h2>
+  <div class="oq">
+    <details class="q"><summary>Oferta é estado da proposta ou recurso anterior a ela?</summary>
+      <div class="body">Hoje existe oferta pré-aprovada calculada antes de qualquer intenção do cliente. Se a consulta de oferta já cria proposta, poluímos o funil com processos que nunca avançam e distorcemos qualquer métrica de conversão. Se não cria, precisamos de um recurso de consulta separado.
+      <div class="rec">→ Recomendação: <b>oferta é consulta, não estado.</b> <code>GET /capital-de-giro/ofertas?cnpj=</code> sem efeito colateral; a proposta nasce da intenção.</div></div>
+    </details>
+    <details class="q"><summary>O agregador consegue simular sem criar proposta?</summary>
+      <div class="body">O arquétipo Agregador compara nossa oferta com a de outros bancos. Se toda simulação exigir proposta aberta, ou saímos da comparação ou enchemos o funil de lixo.
+      <div class="rec">→ Recomendação: <code>POST /capital-de-giro/simulacoes-avulsas</code>, sem proposta, com rate limit próprio e sem efeito no funil. A simulação avulsa pode ser promovida a proposta depois, preservando o id.</div></div>
+    </details>
+    <details class="q"><summary>Simulação expirada leva a proposta a terminal ou volta um passo?</summary>
+      <div class="body">Determina se <code>expirada</code> é realmente terminal. Voltar para <code>aguardando_simulacao</code> é mais amigável, mas cria ciclo no grafo e complica a régua de auditoria — a taxa mudou entre as duas simulações.
+      <div class="rec">→ Recomendação: <b>TTL da simulação volta um passo; TTL da oferta é terminal.</b> São coisas diferentes e merecem tratamento diferente.</div></div>
+    </details>
+    <details class="q"><summary>Assinatura é redirect para o nosso fluxo ou API de desafio?</summary>
+      <div class="body">Muda o <code>ator</code> e, principalmente, muda a viabilidade do arquétipo Headless. Redirect quebra a experiência de quem tem marca própria; API de desafio nos obriga a expor o mecanismo de assinatura.
+      <div class="rec">→ Recomendação: <b>os dois</b>, escolhidos por capacidade do parceiro no onboarding. O contrato de navegação já suporta: muda só o conteúdo de <code>proximo_passo</code>.</div></div>
+    </details>
+    <details class="q"><summary>Desembolso é síncrono no aceite ou job assíncrono? Qual o contrato de falha?</summary>
+      <div class="body">Se é job, precisamos de um estado <code>falha_desembolso</code> e de uma decisão sobre reversão: a proposta volta para assinatura, permanece pendente com retry interno, ou vira terminal com necessidade de nova proposta? É o único ponto do grafo com dinheiro em trânsito.
+      <div class="rec">→ Recomendação: assíncrono com estado explícito e retry interno limitado; nunca terminal silencioso. O parceiro precisa saber a diferença entre "ainda não caiu" e "não vai cair".</div></div>
+    </details>
+    <details class="q"><summary>O mesmo contrato de navegação serve antecipação de recebíveis e cartão?</summary>
+      <div class="body">Se serve, capital de giro deixa de ser um produto isolado e vira a primeira instância de um padrão de plataforma — e o parceiro aprende uma vez para integrar tudo. Se não serve, o que exatamente quebra?
+      <div class="rec">→ Recomendação: validar o contrato contra um segundo produto <b>antes</b> de congelar a v1. Um padrão que só serve um produto não é padrão.</div></div>
+    </details>
+  </div>
+</section>
+
+<div class="close">
+  <p>Encapsular estado é arquitetura. <em>Esconder estado é dívida de suporte.</em></p>
+  <div class="k">A diferença não aparece na demo — aparece no segundo ano</div>
+</div>
+
+<footer>
+  <div><b>Documento companion</b><br>Especificação técnica do contrato v1 — grafo completo, catálogo de erros, semântica de idempotência, sandbox e versionamento</div>
+  <div style="text-align:right"><b>Uso interno · DS BaaS · Open Platform</b><br>ADR-001 · v1 · 31 de agosto de 2026</div>
+</footer>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) { try { hljs.highlightAll(); } catch(e){} }
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){
+        var on = t === tab;
+        t.setAttribute('aria-selected', String(on));
+        var pane = document.getElementById(t.getAttribute('aria-controls'));
+        if (pane) pane.hidden = !on;
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spec Técnica Capital de Giro</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080B; --s1:#0e0f16; --s2:#131622; --code:#0a0b11;
+  --border:#1e2030; --border2:#2a2d40;
+  --red-b:#CC092F; --text:#eef2f7; --body:#c2cbd9; --muted:#6b7690; --dim:#4b556b;
+  --green:#34d399; --amber:#fbbf24; --cyan:#38bdf8; --violet:#a78bfa;
+  --red-s:rgba(204,9,47,.10); --red-l:rgba(204,9,47,.32);
+  --green-s:rgba(52,211,153,.09); --green-l:rgba(52,211,153,.30);
+  --amber-s:rgba(251,191,36,.09); --amber-l:rgba(251,191,36,.30);
+  --cyan-s:rgba(56,189,248,.09); --cyan-l:rgba(56,189,248,.30);
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Syne','DM Sans',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--body);font-family:var(--sans);font-size:14px;line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-.035em;color:var(--text);text-wrap:balance}
+code{font-family:var(--mono);font-size:.88em;color:var(--cyan);background:rgba(56,189,248,.07);
+  border:1px solid rgba(56,189,248,.14);border-radius:3px;padding:1px 5px;white-space:nowrap}
+b,strong{color:var(--text);font-weight:700}
+
+/* shell */
+.shell{max-width:1240px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:216px 1fr;gap:48px;align-items:start}
+nav{position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:34px 0 40px;scrollbar-width:thin}
+nav .brand{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--red-b);
+  padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+nav ol{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:1px}
+nav a{display:flex;gap:10px;text-decoration:none;color:var(--dim);font-size:12.5px;line-height:1.35;
+  padding:6px 9px;border-radius:4px;border-left:2px solid transparent;transition:color .18s,background .18s}
+nav a::before{counter-increment:s;content:counter(s,decimal-leading-zero);font-family:var(--mono);font-size:9.5px;
+  color:var(--border2);flex:none;padding-top:2px}
+nav a:hover{color:var(--body);background:var(--s1)}
+nav a.on{color:var(--cyan);background:var(--cyan-s);border-left-color:var(--cyan)}
+nav a.on::before{color:var(--cyan)}
+main{padding:34px 0 90px;min-width:0}
+
+/* header */
+.hd{padding-bottom:30px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.hd .k{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--red-b)}
+h1{font-size:clamp(26px,4vw,40px);font-weight:800;line-height:1.06;margin:12px 0 14px;max-width:22ch}
+.hd p{font-size:15px;color:var(--muted);max-width:66ch}
+.hd .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.hd .meta span{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--muted);
+  border:1px solid var(--border);background:var(--s1);border-radius:100px;padding:5px 12px}
+
+/* sections */
+section{padding-top:46px;scroll-margin-top:24px}
+section > h2{font-size:22px;font-weight:800;margin-bottom:6px;display:flex;align-items:baseline;gap:12px}
+section > h2 .n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--red-b);font-weight:400}
+.lede{font-size:14.5px;color:var(--muted);max-width:70ch;margin-bottom:20px}
+h3{font-size:15px;font-weight:700;margin:26px 0 10px}
+p{max-width:74ch} p + p{margin-top:11px}
+ul.plain{list-style:none;display:flex;flex-direction:column;gap:9px;margin:12px 0;max-width:74ch}
+ul.plain li{padding-left:18px;position:relative;line-height:1.55}
+ul.plain li::before{content:'—';position:absolute;left:0;color:var(--dim);font-family:var(--mono);font-size:11px}
+
+/* callouts */
+.call{border:1px solid var(--border);border-left:2px solid var(--cyan);border-radius:0 6px 6px 0;
+  background:var(--s1);padding:15px 18px;margin:18px 0;font-size:13.5px;line-height:1.6;max-width:76ch}
+.call .t{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:6px}
+.call.warn{border-left-color:var(--amber)} .call.warn .t{color:var(--amber)}
+.call.rule{border-left-color:var(--red-b)} .call.rule .t{color:var(--red-b)}
+.call.ok{border-left-color:var(--green)} .call.ok .t{color:var(--green)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:6px;background:var(--s1);margin:16px 0}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:12.5px}
+th{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  text-align:left;padding:11px 14px;background:var(--s2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;color:var(--body)}
+tr:last-child td{border-bottom:none}
+td.m,th.m{font-family:var(--mono);font-size:11.5px;white-space:nowrap}
+td code{white-space:nowrap;font-size:11.5px}
+.pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:100px;padding:3px 9px;white-space:nowrap;display:inline-block}
+.pill.b{color:var(--cyan);background:var(--cyan-s);border:1px solid var(--cyan-l)}
+.pill.p{color:var(--red-b);background:var(--red-s);border:1px solid var(--red-l)}
+.pill.c{color:var(--amber);background:var(--amber-s);border:1px solid var(--amber-l)}
+.pill.t{color:var(--green);background:var(--green-s);border:1px solid var(--green-l)}
+.pill.x{color:var(--muted);background:rgba(107,118,144,.10);border:1px solid var(--border2)}
+
+/* code */
+.cb{border:1px solid var(--border);border-radius:6px;background:var(--code);overflow:hidden;margin:16px 0}
+.cb .cap{font-family:var(--mono);font-size:10.5px;color:var(--muted);padding:11px 16px;
+  border-bottom:1px solid var(--border);background:rgba(255,255,255,.015);line-height:1.6}
+.cb .cap b{color:var(--text);font-weight:500}
+pre{overflow-x:auto;padding:16px}
+pre code{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#c8d2e0;background:none;
+  border:none;padding:0;display:block;white-space:pre}
+.hljs-attr,.hljs-attribute{color:var(--cyan)}
+.hljs-string{color:var(--green)}
+.hljs-number{color:var(--amber)}
+.hljs-literal,.hljs-keyword,.hljs-built_in{color:#ff7a8a}
+.hljs-comment{color:#5a6478;font-style:italic}
+.hljs-title,.hljs-title.function_,.hljs-variable,.hljs-params,.hljs-property{color:#c8d2e0}
+.hljs-punctuation,.hljs-bullet{color:var(--muted)}
+
+/* resource tree */
+.tree{border:1px solid var(--border);border-radius:6px;background:var(--code);padding:18px;
+  font-family:var(--mono);font-size:12px;line-height:2;overflow-x:auto;margin:16px 0}
+.tree .v{color:var(--amber)} .tree .u{color:var(--cyan)} .tree .c{color:#5a6478}
+.tree .g{color:var(--dim)}
+
+/* archetype recipes */
+.rec{border:1px solid var(--border);border-radius:6px;background:var(--s1);margin:12px 0;overflow:hidden}
+.rec > .h{padding:15px 18px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.rec > .h .nm{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--text)}
+.rec > .h .ds{font-size:12.5px;color:var(--muted)}
+.rec .cb{margin:0;border:none;border-radius:0}
+
+/* conformance */
+.conf{display:flex;flex-direction:column;gap:7px}
+.cf{display:grid;grid-template-columns:74px 1fr;gap:16px;align-items:start;border:1px solid var(--border);
+  border-radius:5px;background:var(--s1);padding:12px 16px;font-size:13px}
+.cf .lv{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-align:center;border-radius:3px;padding:3px 0;margin-top:2px}
+.cf .lv.must{color:var(--red-b);background:var(--red-s);border:1px solid var(--red-l)}
+.cf .lv.should{color:var(--amber);background:var(--amber-s);border:1px solid var(--amber-l)}
+.cf .lv.may{color:var(--muted);background:rgba(107,118,144,.10);border:1px solid var(--border2)}
+.cf .tx{line-height:1.5}
+
+footer{margin-top:70px;padding-top:24px;border-top:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.9;
+  display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+footer b{color:var(--muted);font-weight:400}
+
+@media (max-width:940px){
+  .shell{grid-template-columns:1fr;gap:0}
+  nav{position:static;max-height:none;padding:26px 0 0;border-bottom:1px solid var(--border)}
+  nav ol{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:2px;padding-bottom:20px}
+  main{padding-top:8px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+@media print{
+  body{background:#fff;color:#111}
+  nav{display:none} .shell{grid-template-columns:1fr}
+  .cb,.tw,.tree,.call,.rec,.cf,table,th{background:#fff!important;border-color:#ccc!important}
+  pre code,td,p{color:#111} th{color:#444}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav>
+  <div class="brand">Spec · Capital de Giro v1</div>
+  <ol>
+    <li><a href="#escopo">Escopo e princípios</a></li>
+    <li><a href="#recursos">Modelo de recursos</a></li>
+    <li><a href="#grafo">Grafo de estados</a></li>
+    <li><a href="#navegacao">Contrato de navegação</a></li>
+    <li><a href="#openapi">OpenAPI 3.1</a></li>
+    <li><a href="#idem">Idempotência e concorrência</a></li>
+    <li><a href="#erros">Catálogo de erros</a></li>
+    <li><a href="#async">Polling e webhook</a></li>
+    <li><a href="#sandbox">Sandbox</a></li>
+    <li><a href="#versao">Versionamento</a></li>
+    <li><a href="#obs">Observabilidade</a></li>
+    <li><a href="#lgpd">Enriquecimento e LGPD</a></li>
+    <li><a href="#receitas">Receitas por arquétipo</a></li>
+    <li><a href="#conformidade">Conformidade do cliente</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="hd">
+  <div class="k">DS BaaS · Open Platform · Especificação técnica</div>
+  <h1>Contrato da API de Capital de Giro</h1>
+  <p>Companion do ADR-001. O ADR decide <b>o quê</b> e <b>por quê</b>; este documento especifica <b>como</b> — grafo completo, semântica de idempotência, catálogo de erros, contrato de assincronia, sandbox e política de versionamento.</p>
+  <div class="meta"><span>v1 · 2026-08-31</span><span>Bradesco-API-Version: 2026-08-31</span><span>OpenAPI 3.1</span><span>Uso interno</span></div>
+</div>
+
+<section id="escopo">
+  <h2><span class="n">01</span>Escopo e princípios</h2>
+  <p class="lede">Especifica a exposição externa de capital de giro no BaaS. Não especifica motor de crédito, política de risco nem integração com o core — só o contrato que o parceiro vê.</p>
+  <h3>Princípios que ordenam as decisões abaixo</h3>
+  <ul class="plain">
+    <li><b>O estado é do banco; a visibilidade é do parceiro.</b> Encapsulamos a orquestração, nunca escondemos onde o processo está.</li>
+    <li><b>Toda resposta ensina o próximo passo.</b> O parceiro não replica a máquina de estado — ele segue o contrato de navegação.</li>
+    <li><b>Resultado de negócio é estado; falha de chamada é erro.</b> Recusa de crédito nunca é <code>4xx</code>.</li>
+    <li><b>Nada obrigatório depende de infraestrutura do parceiro.</b> Integrar sem endpoint público é sempre possível.</li>
+    <li><b>Todo momento com efeito jurídico é um artefato endereçável, imutável e datado.</b></li>
+  </ul>
+</section>
+
+<section id="recursos">
+  <h2><span class="n">02</span>Modelo de recursos</h2>
+  <p class="lede">Um ponto de entrada cria o processo. Tudo o mais pende dele. A oferta e a simulação avulsa ficam fora da proposta de propósito — são consultas sem efeito no funil.</p>
+  <div class="tree">
+<span class="c"># consultas — sem efeito colateral, sem criar proposta</span>
+<span class="v">GET </span>  <span class="u">/capital-de-giro/ofertas</span>?cnpj=                 <span class="c">→ oferta pré-aprovada vigente</span>
+<span class="v">POST</span>  <span class="u">/capital-de-giro/simulacoes-avulsas</span>            <span class="c">→ comparação; rate limit próprio</span>
+
+<span class="c"># o processo</span>
+<span class="v">POST</span>  <span class="u">/capital-de-giro/propostas</span>                     <span class="c">→ 201 + Location + ETag</span>
+<span class="v">GET </span>  <span class="u">/capital-de-giro/propostas/{id}</span>                <span class="c">→ fonte da verdade · polling</span>
+<span class="v">GET </span>  <span class="u">/capital-de-giro/propostas/{id}/historico</span>      <span class="c">→ trilha de transições</span>
+
+<span class="c"># os passos — artefatos imutáveis pendurados no processo</span>
+<span class="v">POST</span>  <span class="u">/capital-de-giro/propostas/{id}/simulacoes</span>     <span class="c">→ pode repetir; a última vigora</span>
+<span class="v">GET </span>  <span class="u">/capital-de-giro/propostas/{id}/simulacoes</span>     <span class="c">→ todas as simulações da proposta</span>
+<span class="v">POST</span>  <span class="u">/capital-de-giro/propostas/{id}/formalizacao</span>   <span class="c">→ evidência do aceite · CET</span>
+<span class="v">POST</span>  <span class="u">/capital-de-giro/propostas/{id}/assinatura</span>     <span class="c">→ abre desafio ou devolve link</span>
+<span class="v">GET </span>  <span class="u">/capital-de-giro/propostas/{id}/contrato</span>       <span class="c">→ PDF assinado · pós-desembolso</span>
+  </div>
+  <div class="call">
+    <div class="t">Por que sub-recursos e não um POST genérico</div>
+    Cada URL acima tem um schema de request e response próprio, tipado e nomeado. É isso que faz o gerador de SDK produzir <code>criarSimulacao(propostaId, body: NovaSimulacao): Simulacao</code> em vez de <code>post(body: any): any</code>. O ponto de entrada único continua existindo — é o <code>POST /propostas</code> mais o contrato de navegação. Quem quer simplicidade nunca digita as URLs abaixo dele.
+  </div>
+</section>
+
+<section id="grafo">
+  <h2><span class="n">03</span>Grafo de estados</h2>
+  <p class="lede">Nove estados, seis deles com ator definido e três terminais. Toda transição declara guarda, ator do próximo passo e prazo de validade. O grafo é parte do contrato — ver <a href="#versao" style="color:var(--cyan)">§10</a>.</p>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th class="m">Origem</th><th class="m">Gatilho</th><th>Guarda</th><th class="m">Destino</th><th>Ator seguinte</th><th class="m">TTL</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="m">—</td><td class="m"><code>POST /propostas</code></td><td>Consentimento vigente para enriquecimento</td><td class="m"><code>criada</code></td><td><span class="pill b">banco</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>criada</code></td><td class="m">interno · automático</td><td>—</td><td class="m"><code>em_elegibilidade</code></td><td><span class="pill b">banco</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>em_elegibilidade</code></td><td class="m">interno · aprovado</td><td>Política de crédito</td><td class="m"><code>aguardando_simulacao</code></td><td><span class="pill p">parceiro</span></td><td class="m">oferta 7d</td></tr>
+        <tr><td class="m"><code>em_elegibilidade</code></td><td class="m">interno · reprovado</td><td>Política de crédito</td><td class="m"><code>recusada</code></td><td><span class="pill t">terminal</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>aguardando_simulacao</code></td><td class="m"><code>POST /simulacoes</code></td><td>Oferta vigente</td><td class="m"><code>aguardando_formalizacao</code></td><td><span class="pill p">parceiro</span></td><td class="m">simulação 48h</td></tr>
+        <tr><td class="m"><code>aguardando_formalizacao</code></td><td class="m"><code>POST /simulacoes</code></td><td>Oferta vigente</td><td class="m"><code>aguardando_formalizacao</code></td><td><span class="pill p">parceiro</span></td><td class="m">reinicia 48h</td></tr>
+        <tr><td class="m"><code>aguardando_formalizacao</code></td><td class="m"><code>POST /formalizacao</code></td><td>Simulação vigente + <code>If-Match</code></td><td class="m"><code>aguardando_assinatura</code></td><td><span class="pill c">cliente final</span></td><td class="m">24h</td></tr>
+        <tr><td class="m"><code>aguardando_formalizacao</code></td><td class="m">TTL da simulação</td><td>—</td><td class="m"><code>aguardando_simulacao</code></td><td><span class="pill p">parceiro</span></td><td class="m">volta um passo</td></tr>
+        <tr><td class="m"><code>aguardando_simulacao</code></td><td class="m">TTL da oferta</td><td>—</td><td class="m"><code>expirada</code></td><td><span class="pill t">terminal</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>aguardando_assinatura</code></td><td class="m">interno · assinado</td><td>Dentro do TTL</td><td class="m"><code>em_desembolso</code></td><td><span class="pill b">banco</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>aguardando_assinatura</code></td><td class="m">TTL vencido</td><td>—</td><td class="m"><code>expirada</code></td><td><span class="pill t">terminal</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>em_desembolso</code></td><td class="m">interno · liquidado</td><td>—</td><td class="m"><code>desembolsada</code></td><td><span class="pill t">terminal</span></td><td class="m">—</td></tr>
+        <tr><td class="m"><code>em_desembolso</code></td><td class="m">interno · falha</td><td>Retry interno esgotado</td><td class="m"><code>falha_desembolso</code></td><td><span class="pill b">banco</span></td><td class="m">retry 72h</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call warn">
+    <div class="t">Ponto de atenção — o único estado com dinheiro em trânsito</div>
+    <code>falha_desembolso</code> não é terminal e não é silencioso. O parceiro precisa distinguir <b>"ainda não caiu"</b> de <b>"não vai cair"</b>. Enquanto houver retry interno, o estado permanece com <code>ator: banco</code>; esgotado o prazo, a transição para terminal carrega motivo catalogado e instrução de nova proposta.
+  </div>
+  <div class="call rule">
+    <div class="t">Invariante</div>
+    Recusa de crédito é <code>200 OK</code> com <code>status: "recusada"</code> e <code>motivo</code> de catálogo fechado. <b>Nunca <code>4xx</code>.</b> Reprovar é resultado de negócio; <code>4xx</code> diz ao parceiro que ele errou a chamada — e faz o cliente de suporte dele abrir ticket conosco.
+  </div>
+</section>
+
+<section id="navegacao">
+  <h2><span class="n">04</span>Contrato de navegação</h2>
+  <p class="lede">O bloco estável que sobrevive ao crescimento do grafo. É o que permite adicionar um estado sem quebrar quem já integrou — desde que o cliente seja conforme (<a href="#conformidade" style="color:var(--cyan)">§14</a>).</p>
+  <div class="cb">
+    <div class="cap"><b>ProximoPasso</b> — presente em toda resposta de proposta. <code>null</code> significa terminal: fim do laço, sem adivinhação.</div>
+<pre><code class="language-yaml">ProximoPasso:
+  type: object
+  required: [acao, metodo, href, ator]
+  properties:
+    acao:
+      type: string
+      description: Identificador estável da ação. Não é rótulo de UI.
+      examples: ["simular", "formalizar", "assinar", "aguardar"]
+    metodo: { type: string, enum: [GET, POST] }
+    href:
+      type: string
+      format: uri-reference
+      description: URL absoluta ou relativa a chamar. O cliente NUNCA a monta.
+    ator:
+      type: string
+      enum: [parceiro, cliente_final, banco]
+      description: |
+        parceiro      → chame href com os campos_requeridos
+        cliente_final → conduza o cliente ao fluxo indicado em href
+        banco         → aguarde; faça polling em _links.self
+    campos_requeridos:
+      type: array
+      items: { type: string }
+    expira_em: { type: string, format: date-time }
+    intervalo_poll_sugerido_s:
+      type: integer
+      description: Presente quando ator = banco. Respeitar reduz custo dos dois lados.
+</code></pre>
+  </div>
+  <div class="call ok">
+    <div class="t">Regra de compatibilidade progressiva</div>
+    Um cliente conforme <b>nunca faz <code>switch</code> exaustivo em <code>status</code></b>. Ele decide por <code>ator</code> e chama <code>href</code>. Assim, um estado novo introduzido em versão futura degrada para "aguardar" ou "seguir o link", não para exceção não tratada. Isto é requisito de conformidade — está no contrato, não na recomendação.
+  </div>
+</section>
+
+<section id="openapi">
+  <h2><span class="n">05</span>OpenAPI 3.1</h2>
+  <p class="lede">Recorte normativo: o processo, um sub-recurso de escrita e os componentes que definem a semântica. O documento completo vive no repositório de contratos e é a fonte de verdade para geração de SDK.</p>
+  <div class="cb">
+    <div class="cap"><b>paths</b> — criação, leitura e a transição com efeito jurídico</div>
+<pre><code class="language-yaml">openapi: 3.1.0
+info:
+  title: Capital de Giro — Bradesco as a Service
+  version: "2026-08-31"
+
+paths:
+
+  /capital-de-giro/propostas:
+    post:
+      operationId: criarProposta
+      summary: Cria a proposta e devolve o primeiro passo
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/ApiVersion'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NovaProposta' }
+      responses:
+        "201":
+          description: Proposta criada
+          headers:
+            Location:         { schema: { type: string, format: uri-reference } }
+            ETag:             { schema: { type: string } }
+            X-Correlation-Id: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposta' }
+        "403": { $ref: '#/components/responses/Problema' }   # consentimento ausente
+        "422": { $ref: '#/components/responses/Problema' }
+
+  /capital-de-giro/propostas/{id}:
+    get:
+      operationId: lerProposta
+      summary: Estado atual — fonte da verdade e caminho de polling
+      parameters:
+        - $ref: '#/components/parameters/PropostaId'
+        - name: If-None-Match
+          in: header
+          schema: { type: string }
+      responses:
+        "200":
+          description: Estado atual
+          headers:
+            ETag: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposta' }
+        "304":
+          description: Sem alteração desde o ETag informado. Não consome cota de leitura.
+          headers:
+            X-Poll-Interval: { schema: { type: integer } }
+
+  /capital-de-giro/propostas/{id}/formalizacao:
+    post:
+      operationId: formalizarProposta
+      summary: Registra o aceite das condições
+      description: |
+        Fronteira com efeito jurídico. Cria artefato imutável e datado com CET,
+        taxa, prazo e identificação de quem aceitou. Nunca colapsar em "avançar".
+      parameters:
+        - $ref: '#/components/parameters/PropostaId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: If-Match
+          in: header
+          required: true
+          description: Versão lida pelo parceiro. Bloqueia avanço sobre estado desatualizado.
+          schema: { type: string }
+      responses:
+        "201": { description: Formalizada, content: { application/json: { schema: { $ref: '#/components/schemas/Proposta' } } } }
+        "409": { $ref: '#/components/responses/Problema' }   # versao-divergente | estado-invalido
+        "410": { $ref: '#/components/responses/Problema' }   # simulacao-expirada
+</code></pre>
+  </div>
+  <div class="cb">
+    <div class="cap"><b>components</b> — a semântica mora aqui. <code>Idempotency-Key</code> e <code>enriquecimento</code> não são detalhes de implementação: são cláusulas do contrato.</div>
+<pre><code class="language-yaml">components:
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Chave única por transição, gerada pelo cliente. Um retry com a mesma chave
+        e o mesmo payload devolve a MESMA resposta, sem novo efeito. Retenção: 24h.
+      schema: { type: string, format: uuid }
+    ApiVersion:
+      name: Bradesco-API-Version
+      in: header
+      description: Data da versão do contrato. Ausente = versão fixada no onboarding.
+      schema: { type: string, format: date }
+
+  schemas:
+    Proposta:
+      type: object
+      required: [id, versao, status, proximo_passo]
+      properties:
+        id:     { type: string, examples: ["prop_01J8ZK3M4QP7"] }
+        versao: { type: integer, description: Valor a enviar em If-Match na próxima escrita }
+        status:
+          type: string
+          description: |
+            Parte versionada do contrato. Adicionar valor a este enum é mudança
+            de contrato mesmo sem alterar o schema. Ver política em §10.
+          enum: [criada, em_elegibilidade, aguardando_simulacao, aguardando_formalizacao,
+                 aguardando_assinatura, em_desembolso, desembolsada,
+                 falha_desembolso, recusada, expirada]
+        motivo:
+          description: Presente em recusada e expirada. Catálogo fechado — nunca texto livre.
+          type: string
+          enum: [restricao_interna, capacidade_pagamento, documentacao_pendente,
+                 restricao_externa, oferta_expirada, assinatura_expirada]
+        proximo_passo:
+          oneOf:
+            - $ref: '#/components/schemas/ProximoPasso'
+            - type: "null"
+        enriquecimento:
+          type: array
+          items:
+            type: object
+            required: [campo, origem, base_legal]
+            properties:
+              campo:      { type: string }
+              origem:     { type: string, enum: [interna, bureau, open_finance] }
+              base_legal: { type: string, examples: ["consentimento:cons_9F2K"] }
+
+  responses:
+    Problema:
+      description: Erro conforme RFC 9457
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+</code></pre>
+  </div>
+</section>
+
+<section id="idem">
+  <h2><span class="n">06</span>Idempotência e concorrência</h2>
+  <p class="lede">Duas proteções distintas e complementares. <code>Idempotency-Key</code> protege contra <b>repetição da mesma intenção</b>; <code>If-Match</code> protege contra <b>duas intenções concorrentes</b>. Uma não substitui a outra.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Cenário</th><th class="m">Resposta</th><th>Comportamento</th></tr></thead>
+      <tbody>
+        <tr><td>Retry de rede: mesma chave, mesmo payload</td><td class="m"><code>201</code> / <code>200</code></td><td>Devolve a resposta original byte a byte. Nenhum efeito novo. É o caso que impede desembolso duplicado.</td></tr>
+        <tr><td>Mesma chave, payload diferente</td><td class="m"><code>422</code></td><td><code>idempotency-key-reutilizada</code>. Sinaliza bug no cliente — a chave é por intenção, não por sessão.</td></tr>
+        <tr><td>Chave nova, estado já avançou</td><td class="m"><code>409</code></td><td><code>estado-invalido</code>. O corpo do erro traz o <code>status</code> atual e o <code>proximo_passo</code> correto.</td></tr>
+        <tr><td>Duas abas do parceiro, mesmo estado, chaves distintas</td><td class="m"><code>409</code></td><td>A primeira vence. A segunda falha no <code>If-Match</code> com <code>versao-divergente</code>. Nenhuma escrita perdida em silêncio.</td></tr>
+        <tr><td>Requisição original ainda em voo, retry chega antes</td><td class="m"><code>409</code></td><td><code>requisicao-em-andamento</code> com <code>Retry-After</code>. Nunca processa em paralelo a mesma chave.</td></tr>
+        <tr><td>Retry após 24h com a mesma chave</td><td class="m">varia</td><td>Chave expirou; a proteção passa a ser exclusivamente o <code>If-Match</code>. Documentado para que o parceiro não confie na chave como memória de longo prazo.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call rule">
+    <div class="t">Requisito de servidor</div>
+    A chave é gravada <b>antes</b> de qualquer efeito colateral, num escopo que inclui o parceiro e a rota. Chave replicada entre parceiros distintos nunca colide; chave reaproveitada entre rotas distintas do mesmo parceiro é rejeitada.
+  </div>
+</section>
+
+<section id="erros">
+  <h2><span class="n">07</span>Catálogo de erros</h2>
+  <p class="lede">Todo erro é <code>application/problem+json</code> conforme RFC 9457. O <code>type</code> é a chave estável que o parceiro trata em código; <code>title</code> e <code>detail</code> são para humanos e podem mudar.</p>
+  <div class="cb">
+    <div class="cap">Formato canônico — <code>proximo_passo</code> viaja no erro quando a recuperação é conhecida. O parceiro não precisa reler para saber o que fazer.</div>
+<pre><code class="language-json">{
+  "type": "https://api.bradesco.com.br/problems/versao-divergente",
+  "title": "A proposta foi alterada desde a sua última leitura",
+  "status": 409,
+  "detail": "If-Match informou versao 4; a versao atual é 6.",
+  "instance": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7",
+  "correlation_id": "corr_8H2K4M",
+  "versao_atual": 6,
+  "proximo_passo": {
+    "acao": "formalizar", "metodo": "POST",
+    "href": "/capital-de-giro/propostas/prop_01J8ZK3M4QP7/formalizacao",
+    "ator": "parceiro"
+  }
+}
+</code></pre>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="m">type</th><th class="m">HTTP</th><th>Quando</th><th>Ação do parceiro</th></tr></thead>
+      <tbody>
+        <tr><td class="m"><code>campos-invalidos</code></td><td class="m">422</td><td>Payload não passa na validação</td><td>Corrigir. <code>errors[]</code> aponta campo e regra.</td></tr>
+        <tr><td class="m"><code>consentimento-ausente</code></td><td class="m">403</td><td>Sem base legal vigente para o enriquecimento necessário</td><td>Recoletar consentimento e repetir.</td></tr>
+        <tr><td class="m"><code>estado-invalido</code></td><td class="m">409</td><td>Transição não permitida a partir do estado atual</td><td>Seguir o <code>proximo_passo</code> devolvido no erro.</td></tr>
+        <tr><td class="m"><code>versao-divergente</code></td><td class="m">409</td><td><code>If-Match</code> não corresponde à versão atual</td><td>Reler, reconciliar com o usuário, reenviar.</td></tr>
+        <tr><td class="m"><code>requisicao-em-andamento</code></td><td class="m">409</td><td>Mesma <code>Idempotency-Key</code> ainda em processamento</td><td>Aguardar <code>Retry-After</code> e repetir a mesma chave.</td></tr>
+        <tr><td class="m"><code>idempotency-key-reutilizada</code></td><td class="m">422</td><td>Chave já usada com payload diferente</td><td>Gerar chave nova. Indica bug de geração no cliente.</td></tr>
+        <tr><td class="m"><code>simulacao-expirada</code></td><td class="m">410</td><td>TTL da simulação vencido antes da formalização</td><td>Nova simulação. A proposta continua viva.</td></tr>
+        <tr><td class="m"><code>oferta-expirada</code></td><td class="m">410</td><td>TTL da oferta vencido</td><td>Proposta é terminal. Criar nova.</td></tr>
+        <tr><td class="m"><code>limite-taxa</code></td><td class="m">429</td><td>Cota excedida</td><td>Respeitar <code>Retry-After</code>. Polling com <code>If-None-Match</code> não consome cota.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call warn">
+    <div class="t">Não está nesta tabela, e é de propósito</div>
+    Não existe <code>elegibilidade-negada</code>, <code>credito-recusado</code> nem equivalente. <b>Recusa é estado, não erro.</b> Um parceiro que trata recusa no bloco de exceção constrói a UI errada — e nós construímos o incentivo errado ao devolver <code>4xx</code>.
+  </div>
+</section>
+
+<section id="async">
+  <h2><span class="n">08</span>Polling e webhook</h2>
+  <p class="lede">Dois caminhos, mesma informação. A paridade não é cortesia: é o que mantém a cauda longa de parceiros integrável e o que nos permite evoluir os eventos sem quebrar quem não os usa.</p>
+
+  <h3>Polling — caminho padrão</h3>
+  <ul class="plain">
+    <li><code>GET</code> com <code>If-None-Match</code> devolve <code>304</code> quando nada mudou. Resposta sem corpo, sem consumo de cota.</li>
+    <li>Quando <code>ator</code> é <code>banco</code>, a resposta traz <code>intervalo_poll_sugerido_s</code>. Backoff recomendado: 1s, 2s, 4s, 8s, teto 15s.</li>
+    <li>O laço termina quando <code>proximo_passo</code> é <code>null</code>. Não existe condição de parada implícita.</li>
+    <li>Elegibilidade resolve em segundos no caso comum; o desenho não pressupõe polling de horas.</li>
+  </ul>
+
+  <h3>Webhook — otimização opcional</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Propriedade</th><th>Contrato</th></tr></thead>
+      <tbody>
+        <tr><td class="m">Assinatura</td><td>HMAC-SHA256 do corpo bruto com segredo por parceiro. Header <code>X-Signature: t=&lt;epoch&gt;,v1=&lt;hex&gt;</code>. Tolerância de <code>t</code>: 5 minutos.</td></tr>
+        <tr><td class="m">Entrega</td><td>At-least-once. O parceiro <b>deve</b> deduplicar por <code>event_id</code>.</td></tr>
+        <tr><td class="m">Ordem</td><td>Não garantida. Todo evento carrega <code>versao</code> da proposta; evento com versão menor que a última observada deve ser descartado.</td></tr>
+        <tr><td class="m">Retry</td><td>Backoff exponencial por 24h em qualquer resposta fora de <code>2xx</code>. Após 24h, o evento é descartado — e o estado continua disponível por <code>GET</code>.</td></tr>
+        <tr><td class="m">Conteúdo</td><td>Identificador, tipo, <code>versao</code> e <code>status</code>. <b>Nunca dado sensível.</b> O evento é um aviso para reler, não um substituto da leitura.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call rule">
+    <div class="t">Regra de paridade — critério de aceite da documentação</div>
+    Todo evento de webhook tem estado correspondente observável por <code>GET</code>. <b>Nenhuma informação chega exclusivamente por callback.</b> Um parceiro que só faz polling nunca fica sabendo menos — apenas fica sabendo depois. Consequência prática: podemos adicionar eventos sem quebrar ninguém, e a documentação de polling recebe o mesmo investimento da de webhook.
+  </div>
+</section>
+
+<section id="sandbox">
+  <h2><span class="n">09</span>Sandbox e semeadura de estado</h2>
+  <p class="lede">Com máquina de estado, o parceiro não consegue chegar num caminho infeliz só chamando os endpoints na ordem. Sem semeadura, ele descobre <code>expirada</code> e <code>falha_desembolso</code> em produção.</p>
+  <div class="cb">
+    <div class="cap">Duas ferramentas: <b>criar já posicionado</b> e <b>forçar transição</b>. Disponíveis apenas no ambiente de sandbox, com a mesma autenticação da API.</div>
+<pre><code class="language-http">POST /sandbox/capital-de-giro/propostas
+{
+  "estado_inicial": "aguardando_assinatura",
+  "cnpj": "00000000000191",
+  "simulacao": { "valor": 250000, "parcelas": 12, "taxa_am": 1.79 }
+}
+→ 201 { "id": "prop_sbx_4K2M", "status": "aguardando_assinatura", ... }
+
+POST /sandbox/capital-de-giro/propostas/{id}/forcar
+{ "para": "falha_desembolso", "motivo": "restricao_externa" }
+→ 200 — qualquer transição do grafo, inclusive as que só o banco dispara
+</code></pre>
+  </div>
+  <h3>CNPJs determinísticos</h3>
+  <p>Análogo aos cartões de teste de gateways de pagamento: o comportamento é previsível pelo dado de entrada, sem precisar de ferramenta separada.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="m">CNPJ de teste</th><th>Comportamento</th></tr></thead>
+      <tbody>
+        <tr><td class="m"><code>00000000000191</code></td><td>Sempre aprova. Percorre o caminho feliz completo até <code>desembolsada</code>.</td></tr>
+        <tr><td class="m"><code>00000000000272</code></td><td>Recusa em elegibilidade com <code>motivo: capacidade_pagamento</code>.</td></tr>
+        <tr><td class="m"><code>00000000000353</code></td><td>Aprova, mas a simulação expira em 60 segundos. Exercita o retorno de passo.</td></tr>
+        <tr><td class="m"><code>00000000000434</code></td><td>Assina e falha no desembolso, entrando em <code>falha_desembolso</code>.</td></tr>
+        <tr><td class="m"><code>00000000000515</code></td><td>Elegibilidade lenta — 45 segundos em <code>em_elegibilidade</code>. Exercita o backoff.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call ok">
+    <div class="t">Critério de aceite do sandbox</div>
+    Um parceiro consegue exercitar <b>os nove estados e os seis motivos de recusa</b> sem abrir chamado e sem engenheiro do banco na sala. Se precisar pedir ajuda para produzir um caminho infeliz, o sandbox não está pronto.
+  </div>
+</section>
+
+<section id="versao">
+  <h2><span class="n">10</span>Versionamento</h2>
+  <p class="lede">A consequência mais subestimada da decisão do ADR: <b>o contrato passa a ser schema mais grafo.</b> Um estado novo quebra o cliente sem alterar uma linha de JSON.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Mudança</th><th>Classificação</th><th>Como entregamos</th></tr></thead>
+      <tbody>
+        <tr><td>Campo opcional novo na resposta</td><td><span class="pill t">aditiva</span></td><td>Imediata, sem nova versão.</td></tr>
+        <tr><td>Campo novo obrigatório na requisição</td><td><span class="pill p">breaking</span></td><td>Nova versão datada. Nunca em versão vigente.</td></tr>
+        <tr><td>Valor novo no <code>enum</code> de <code>status</code></td><td><span class="pill c">breaking por padrão</span></td><td>Só visível para <code>Bradesco-API-Version</code> igual ou posterior. Cliente conforme (<a href="#conformidade" style="color:var(--cyan)">§14</a>) absorve sem quebra.</td></tr>
+        <tr><td>Valor novo no <code>enum</code> de <code>motivo</code></td><td><span class="pill c">breaking por padrão</span></td><td>Mesma regra. Cliente deve ter tratamento genérico de motivo desconhecido.</td></tr>
+        <tr><td>Transição nova entre estados existentes</td><td><span class="pill c">breaking por padrão</span></td><td>Muda a sequência que o parceiro observa. Versão datada.</td></tr>
+        <tr><td>TTL alterado</td><td><span class="pill c">breaking por padrão</span></td><td>Muda o comportamento observável sem mudar o schema. Comunicação prévia obrigatória.</td></tr>
+        <tr><td>Remoção de campo ou de estado</td><td><span class="pill p">breaking</span></td><td>Deprecação com headers <code>Deprecation</code> e <code>Sunset</code>. Janela mínima de 12 meses.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>A versão é datada e fixada no onboarding do parceiro — <code>Bradesco-API-Version: 2026-08-31</code>. Ausência do header significa a versão fixada no cadastro, nunca a mais recente: nenhum parceiro é promovido de versão sem ato explícito.</p>
+</section>
+
+<section id="obs">
+  <h2><span class="n">11</span>Observabilidade</h2>
+  <p class="lede">Encapsular a orquestração transfere para nós a obrigação de explicar onde o processo parou. O histórico exposto ao parceiro é o preço — e o antídoto — do ponto de entrada único.</p>
+  <div class="cb">
+    <div class="cap"><code>GET /propostas/{id}/historico</code> — o que o parceiro vê. Cada transição carrega o <code>correlation_id</code> do passo interno que a produziu.</div>
+<pre><code class="language-json">{
+  "transicoes": [
+    { "de": null, "para": "criada", "em": "2026-08-31T14:02:11Z",
+      "ator": "parceiro", "correlation_id": "corr_8H2K4M" },
+
+    { "de": "criada", "para": "em_elegibilidade", "em": "2026-08-31T14:02:11Z",
+      "ator": "banco", "passo_interno": "motor_elegibilidade",
+      "correlation_id": "corr_8H2K4M" },
+
+    { "de": "em_elegibilidade", "para": "aguardando_simulacao", "em": "2026-08-31T14:02:14Z",
+      "ator": "banco", "passo_interno": "motor_elegibilidade",
+      "duracao_ms": 2840, "correlation_id": "corr_8H2K4M" },
+
+    { "de": "aguardando_simulacao", "para": "aguardando_formalizacao", "em": "2026-08-31T14:06:02Z",
+      "ator": "parceiro", "artefato": "sim_7Q2X", "correlation_id": "corr_9J3L5N" }
+  ]
+}
+</code></pre>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>O que expomos</th><th>O que não expomos</th></tr></thead>
+      <tbody>
+        <tr><td>Transição, timestamp, ator e duração</td><td>Score de crédito e qualquer variável de modelo</td></tr>
+        <tr><td>Nome do passo interno em vocabulário estável</td><td>Regra de política que produziu a decisão</td></tr>
+        <tr><td><code>correlation_id</code> ponta a ponta, ecoado em toda resposta</td><td>Motivo de recusa além do catálogo fechado de seis valores</td></tr>
+        <tr><td>Identificador do artefato gerado em cada passo</td><td>Topologia interna, nomes de serviço, mensagens de exceção</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="lgpd">
+  <h2><span class="n">12</span>Enriquecimento e base legal</h2>
+  <p class="lede">Enriquecimento server-side melhora conversão e destrói explicabilidade — a menos que seja declarado. O parceiro é quem atende o cliente final; sem saber o que foi usado, ele não explica a oferta nem a recusa.</p>
+  <ul class="plain">
+    <li><b>Todo campo preenchido pelo banco aparece no bloco <code>enriquecimento</code></b> com nome do campo, origem e base legal. O valor pode ser omitido; a existência do tratamento, nunca.</li>
+    <li><b>A origem vem de catálogo fechado</b> — <code>interna</code>, <code>bureau</code>, <code>open_finance</code>. Serve à auditoria e mantém o schema estável.</li>
+    <li><b>A base legal referencia o artefato concreto</b> — o consentimento coletado pelo parceiro ou o contrato de relacionamento. É o elo que sustenta a cadeia em fiscalização.</li>
+    <li><b>Consentimento vencido é <code>403</code>, não silêncio.</b> Degradar a oferta sem avisar é pior que falhar: produz decisão pior sem que ninguém saiba por quê.</li>
+    <li><b>Formalização é o artefato probatório.</b> Imutável, datado, com CET, taxa, prazo e identificação de quem aceitou. Nenhuma otimização de fluxo pode colapsá-lo em outra transição.</li>
+  </ul>
+  <div class="call warn">
+    <div class="t">A ser validado antes do congelamento</div>
+    A cadeia de base legal entre o consentimento que o <b>parceiro</b> coleta e o tratamento que o <b>banco</b> executa precisa de validação jurídica formal — especialmente no arquétipo Headless, em que o titular nunca vê a marca Bradesco durante a coleta.
+  </div>
+</section>
+
+<section id="receitas">
+  <h2><span class="n">13</span>Receitas por arquétipo</h2>
+  <p class="lede">O mesmo contrato, três consumos. Nenhum deles requer endpoint público.</p>
+
+  <div class="rec">
+    <div class="h"><span class="nm">Embed</span><span class="ds">Usa nossa tela. Segue o contrato de navegação e ignora as URLs.</span></div>
+    <div class="cb">
+<pre><code class="language-javascript">let p = await api.post('/capital-de-giro/propostas',
+  { cnpj, valor_desejado: 250000 }, { 'Idempotency-Key': uuid() });
+
+while (p.proximo_passo) {
+  const { metodo, href, ator, acao, campos_requeridos } = p.proximo_passo;
+  if (ator === 'banco') {
+    await sleep(p.proximo_passo.intervalo_poll_sugerido_s * 1000);
+    p = await api.get(p._links.self, { 'If-None-Match': p.etag });
+    continue;
+  }
+  const payload = await minhaUI.coletar(acao, campos_requeridos);
+  p = await api[metodo.toLowerCase()](href, payload,
+    { 'Idempotency-Key': uuid(), 'If-Match': p.versao });
+}
+console.log(p.status);   // "desembolsada" | "recusada" | "expirada"
+</code></pre>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="h"><span class="nm">Headless</span><span class="ds">Marca própria. Chama os sub-recursos direto, com tipos.</span></div>
+    <div class="cb">
+<pre><code class="language-typescript">const proposta = await sdk.capitalDeGiro.criarProposta(
+  { cnpj, valorDesejado: 250_000 }, { idempotencyKey: uuid() });
+
+await sdk.capitalDeGiro.aguardarAtor(proposta.id, 'parceiro');   // polling encapsulado
+
+// simula três prazos para renderizar na própria UI
+const opcoes = await Promise.all([12, 18, 24].map(parcelas =>
+  sdk.capitalDeGiro.criarSimulacao(proposta.id,
+    { valor: 250_000, parcelas }, { idempotencyKey: uuid() })));
+
+const escolhida = await minhaUI.compararEEscolher(opcoes);   // CET, taxa, parcela
+
+const formalizada = await sdk.capitalDeGiro.formalizar(proposta.id,
+  { simulacaoId: escolhida.id, representanteLegal, contaDesembolso },
+  { idempotencyKey: uuid(), ifMatch: escolhida.versao });
+
+// erro de contrato aqui é de compilação, não de runtime
+</code></pre>
+    </div>
+  </div>
+
+  <div class="rec">
+    <div class="h"><span class="nm">Agregador</span><span class="ds">Compara com outros bancos. Simula sem criar proposta.</span></div>
+    <div class="cb">
+<pre><code class="language-http">POST /capital-de-giro/simulacoes-avulsas
+{ "cnpj": "...", "valor": 250000, "parcelas": [12, 18, 24] }
+
+→ 200 { "simulacoes": [ { "id": "simx_...", "parcelas": 12,
+                          "taxa_am": 1.79, "cet_aa": 26.42,
+                          "expira_em": "..." }, ... ] }
+
+# sem efeito no funil · rate limit próprio · nenhuma proposta criada
+# a simulação avulsa pode ser promovida depois, preservando o id:
+
+POST /capital-de-giro/propostas
+{ "cnpj": "...", "simulacao_avulsa_id": "simx_..." }
+</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="conformidade">
+  <h2><span class="n">14</span>Conformidade do cliente</h2>
+  <p class="lede">O que um cliente precisa fazer para que a evolução do grafo não o quebre. Publicado na documentação do parceiro e verificado no sandbox antes da liberação para produção.</p>
+  <div class="conf">
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Decidir o próximo passo por <code>proximo_passo.ator</code> e <code>href</code> — nunca por <code>switch</code> exaustivo em <code>status</code>.</span></div>
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Tratar <code>status</code> e <code>motivo</code> desconhecidos genericamente, sem lançar exceção.</span></div>
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Enviar <code>Idempotency-Key</code> nova por intenção e reenviá-la — não regenerá-la — em retry de rede.</span></div>
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Enviar <code>If-Match</code> com a <code>versao</code> lida em toda escrita, e tratar <code>409</code> relendo antes de repetir.</span></div>
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Tratar recusa e expiração como estados de negócio, exibidos ao cliente final — nunca como falha técnica.</span></div>
+    <div class="cf"><span class="lv must">MUST</span><span class="tx">Nunca montar URLs de transição por concatenação. Usar sempre o <code>href</code> devolvido.</span></div>
+    <div class="cf"><span class="lv should">SHOULD</span><span class="tx">Respeitar <code>intervalo_poll_sugerido_s</code> e usar <code>If-None-Match</code> em todo polling.</span></div>
+    <div class="cf"><span class="lv should">SHOULD</span><span class="tx">Registrar o <code>correlation_id</code> de toda resposta nos próprios logs — é a chave de qualquer investigação conjunta.</span></div>
+    <div class="cf"><span class="lv should">SHOULD</span><span class="tx">Persistir o <code>id</code> da proposta antes de qualquer navegação, para permitir retomada após queda.</span></div>
+    <div class="cf"><span class="lv may">MAY</span><span class="tx">Consumir webhooks como otimização de latência, deduplicando por <code>event_id</code> e descartando eventos com <code>versao</code> anterior à última observada.</span></div>
+  </div>
+  <div class="call rule">
+    <div class="t">O contrato é bidirecional</div>
+    Os seis <code>MUST</code> acima são o que nos permite evoluir o grafo sem quebrar o parque integrado. Se não forem verificados no sandbox antes da liberação, <b>a promessa de "adicionar estado sem quebrar ninguém" é falsa</b> — e a Opção A do ADR teria sido a escolha mais honesta.
+  </div>
+</section>
+
+<footer>
+  <div><b>Documento principal</b><br>ADR-001 — Exposição da API de Capital de Giro<br>Este documento responde às seis questões abertas do ADR na forma de recomendação normativa</div>
+  <div style="text-align:right"><b>Uso interno · DS BaaS · Open Platform</b><br>Especificação técnica · v1 · 31 de agosto de 2026</div>
+</footer>
+
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function(){
+  if (window.hljs) { try { hljs.highlightAll(); } catch(e){} }
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  var seen = {};
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ seen[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0; });
+    var best = null, top = 0;
+    Object.keys(seen).forEach(function(id){ if (seen[id] > top) { top = seen[id]; best = id; } });
+    if (best) links.forEach(function(a){ a.classList.toggle('on', a === map[best]); });
+  }, { rootMargin: '-8% 0px -70% 0px', threshold: [0, .25, .5, 1] });
+  document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+})();
+</script>
+</body>
+</html>
